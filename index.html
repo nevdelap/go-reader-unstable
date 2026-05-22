@@ -136,7 +136,9 @@
       --overlay-shadow: rgba(0, 0, 0, 0.3);
       /* overlay positioning */
       --overlay-offset: -12px;
+      --sticky-controls-offset: calc(22px + env(safe-area-inset-top, 0px));
       /* z-index layers */
+      --z-controls-sticky: 10;
       --z-panel: 100;
       --z-panel-overlay: 200;
       --z-modal-backdrop: 1000;
@@ -272,6 +274,45 @@
       margin-bottom: 10px;
     }
 
+    .controls-sticky-sentinel {
+      height: 1px;
+    }
+
+    .controls-sticky {
+      position: sticky;
+      top: var(--sticky-controls-offset);
+      z-index: var(--z-controls-sticky);
+      background: var(--bg);
+      padding-top: 1px;
+      padding-bottom: 12px;
+    }
+
+    .controls-sticky-scroll {
+      background: var(--bg);
+    }
+
+    .controls-sticky::before {
+      content: '';
+      position: absolute;
+      top: calc(-1 * var(--sticky-controls-offset));
+      left: 50%;
+      width: 100vw;
+      height: var(--sticky-controls-offset);
+      transform: translateX(-50%);
+      background: var(--bg);
+      pointer-events: none;
+    }
+
+    .controls-sticky.stuck::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 24px;
+      right: 24px;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
     textarea {
       font-family: 'Noto Sans JP', sans-serif;
       font-size: 16px;
@@ -355,6 +396,7 @@
         border-color: var(--accent);
         color: var(--hover-text);
       }
+
       .toolbar-btn:disabled:hover {
         background: none;
         border-color: var(--border-mid);
@@ -428,6 +470,11 @@
     }
 
     @media (max-width: 600px) {
+      .controls-sticky-scroll {
+        max-height: calc(100dvh - var(--sticky-controls-offset));
+        overflow-y: auto;
+      }
+
       .legend-hint-desktop {
         display: none;
       }
@@ -947,7 +994,7 @@
     <header>
       <div class="header-left">
         <div class="logo">語 <span>Reader</span></div>
-        <div class="subtitle">Japanese Reader For Learners · v1.18.0</div>
+        <div class="subtitle">Japanese Reader For Learners · v1.19.0</div>
       </div>
       <div style="display:flex; gap:8px;">
         <button type="button" id="helpBtn" class="toolbar-btn" title="Help">?</button>
@@ -956,29 +1003,37 @@
     </header>
 
     <main>
-      <div class="input-wrap">
-        <textarea id="inputText" placeholder="日本語のテキストを貼り付けてください。" rows="3" aria-label="Japanese text input"></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
-          <button type="button" id="clearBtn" class="toolbar-btn" title="Ctrl+K">Clear</button>
-          <button type="button" id="pasteBtn" class="toolbar-btn" title="Ctrl+V">Paste</button>
-          <button type="button" id="copyUrlBtn" class="toolbar-btn" title="Share or copy link to this text"></button>
-          <button type="button" id="exampleBtn" class="toolbar-btn"
-            title="Load example text to see the app in action without having to find your own Japanese content first">Example</button>
+      <div class="controls-sticky-sentinel" aria-hidden="true"></div>
+      <div class="controls-sticky">
+        <div class="controls-sticky-scroll">
+          <div class="input-wrap">
+            <textarea id="inputText" placeholder="日本語のテキストを貼り付けてください。" rows="3"
+              aria-label="Japanese text input"></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+              <button type="button" id="clearBtn" class="toolbar-btn" title="Ctrl+K">Clear</button>
+              <button type="button" id="pasteBtn" class="toolbar-btn" title="Ctrl+V">Paste</button>
+              <button type="button" id="copyUrlBtn" class="toolbar-btn"
+                title="Share or copy link to this text"></button>
+              <button type="button" id="exampleBtn" class="toolbar-btn"
+                title="Load example text to see the app in action without having to find your own Japanese content first">Example</button>
+            </div>
+          </div>
+
+          <div class="status-box info hidden" id="statusBox" role="status" aria-live="polite"></div>
+          <div class="legend hidden" id="legend">
+            <span class="legend-hint legend-hint-desktop">Click morphemes, or navigate with Tab/Shift-Tab and press
+              Space,
+              to
+              see translations.</span>
+            <span class="legend-hint legend-hint-mobile">Tap morphemes to see translations.</span>
+            <button type="button" id="verticalBtn" class="toolbar-btn" aria-pressed="false" title="Alt+D"
+              style="margin-left:auto;">Read top to bottom</button>
+            <button type="button" id="dimGrammarBtn" class="toolbar-btn" aria-pressed="false"></button>
+          </div>
         </div>
       </div>
 
-      <div class="status-box info hidden" id="statusBox" role="status" aria-live="polite"></div>
-
       <div id="tokenView" class="hidden">
-        <div class="legend">
-          <span class="legend-hint legend-hint-desktop">Click morphemes, or navigate with Tab/Shift-Tab and press Space,
-            to
-            see translations.</span>
-          <span class="legend-hint legend-hint-mobile">Tap morphemes to see translations.</span>
-          <button type="button" id="verticalBtn" class="toolbar-btn" aria-pressed="false" title="Alt+D"
-            style="margin-left:auto;">Read top to bottom</button>
-          <button type="button" id="dimGrammarBtn" class="toolbar-btn" aria-pressed="false"></button>
-        </div>
         <div class="token-area" id="tokenArea" role="list" aria-label="Analyzed Japanese text"></div>
         <div class="token-count" id="tokenCount"></div>
       </div>
@@ -1010,15 +1065,20 @@
       <h2 class="overlay-title" id="welcomeTitle">Welcome to 語 Reader <sup>1</sup></h2>
       <div class="overlay-body">
         <p>A free Japanese reader for advanced learners. <strong>Type or paste</strong> Japanese text from AI tools,
-          websites, or learning materials, then <strong><span class="overlay-desktop">click</span><span class="overlay-mobile">tap</span> any morpheme</strong> to see its reading
-          and English meaning. <strong><span class="overlay-desktop">Click</span><span class="overlay-mobile">Tap</span> the EXAMPLE button</strong> to try the app with sample text and explore
+          websites, or learning materials, then <strong><span class="overlay-desktop">click</span><span
+              class="overlay-mobile">tap</span> any morpheme</strong> to see its reading
+          and English meaning. <strong><span class="overlay-desktop">Click</span><span class="overlay-mobile">Tap</span>
+            the EXAMPLE button</strong> to try the app with sample text and explore
           its features.</p>
         <ul>
           <li><strong>No AI</strong> — Dictionary lookups happen locally in your browser, fast and private</li>
           <li><strong>Grammar morphemes</strong> — Toggle dimming for enhanced learning</li>
-          <li class="overlay-desktop-only"><strong>Keyboard shortcuts</strong> — Ctrl+K to clear text, Ctrl+V to paste, Alt+D to toggle reading
-            direction, Enter in panel to enlarge morpheme to clearly see kanji form and distinguish dakuten and handakuten</li>
-          <li><strong>Everything stays in your browser</strong> — No login, no server, no ads, no tracking <sup>2</sup></li>
+          <li class="overlay-desktop-only"><strong>Keyboard shortcuts</strong> — Ctrl+K to clear text, Ctrl+V to paste,
+            Alt+D to toggle reading
+            direction, Enter in panel to enlarge morpheme to clearly see kanji form and distinguish dakuten and
+            handakuten</li>
+          <li><strong>Everything stays in your browser</strong> — No login, no server, no ads, no tracking <sup>2</sup>
+          </li>
         </ul>
         <ol style="font-size:11px; color:var(--text-muted); margin-top:8px; padding-left:20px; margin:0;">
           <li>When you are speaking English, pronounce the name like the English verb "to go" — "Go Reader".</li>
@@ -1050,7 +1110,8 @@
     <button class="panel-close" id="panelClose" aria-label="Close word details" title="Close (Esc)">✕</button>
   </div>
 
-  <div class="panel-word-overlay hidden" id="panelWordOverlay" tabindex="-1" role="region" aria-label="Enlarged morpheme view">
+  <div class="panel-word-overlay hidden" id="panelWordOverlay" tabindex="-1" role="region"
+    aria-label="Enlarged morpheme view">
     <div class="panel-word-overlay-content">
       <div class="panel-surface" id="overlaySurface" lang="ja"></div>
       <div class="panel-reading hidden" id="overlayReading" lang="ja"></div>
@@ -1147,7 +1208,7 @@
       if (!COMPRESSION_SUPPORTED) {
         throw new Error('DecompressionStream not supported');
       }
-      const res = await fetch('dict/jmdict-compact.json.gz?v=18');
+      const res = await fetch('dict/jmdict-compact.json.gz?v=19');
       if (!res.ok) throw new Error(`JMdict fetch failed: ${res.status}`);
       if (res.headers.get('Content-Encoding') === 'gzip') {
         // Server decompressed automatically (e.g. local dev server)
@@ -1206,6 +1267,23 @@
     const $ = id => document.getElementById(id);
     function show(el) { el.classList.remove('hidden'); }
     function hide(el) { el.classList.add('hidden'); }
+
+    // ── Sticky controls visual feedback ─────────────────────────────────────────
+    const controlsStickySentinel = document.querySelector('.controls-sticky-sentinel');
+    const controlsSticky = document.querySelector('.controls-sticky');
+    if (controlsStickySentinel && controlsSticky && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          controlsSticky.classList.toggle('stuck', !entry.isIntersecting);
+        },
+        {
+          root: null,
+          threshold: [0],
+          rootMargin: `-${getComputedStyle(controlsSticky).top} 0px 0px 0px`,
+        }
+      );
+      observer.observe(controlsStickySentinel);
+    }
 
     function setStatus(msg, type) {
       const box = $('statusBox');
@@ -1345,6 +1423,7 @@
 
         setStatus(null);
         show($('emptyState'));
+        hide($('legend'));
         if ($('inputText').value.trim()) {
           analyze();
         } else {
@@ -1591,6 +1670,7 @@
 
       if (!text) {
         hide($('tokenView'));
+        hide($('legend'));
         show($('emptyState'));
         closePanel();
         lastRawInput = null;
@@ -1601,6 +1681,7 @@
       // Skip re-tokenizing if the raw input hasn't changed
       if (raw === lastRawInput) {
         show($('tokenView'));
+        show($('legend'));
         return;
       }
 
@@ -1612,6 +1693,7 @@
         closePanel(true);
         renderTokens();
         show($('tokenView'));
+        show($('legend'));
         const restored = restoreSelectedMorpheme();
         if (isVertical && !restored) {
           requestAnimationFrame(() => { $('tokenArea').scrollLeft = $('tokenArea').scrollWidth; });
@@ -1621,6 +1703,8 @@
         tokens = [];
         lastRawInput = null;
         setStatus('Analysis failed. Please try again.', 'error');
+        hide($('tokenView'));
+        hide($('legend'));
         show($('emptyState'));
       }
     }

@@ -19,13 +19,13 @@ serve:
 # Format Markdown files.
 format:
     @echo $'{{ BLUE }}Formatting Markdown files...{{ RESET }}'
-    uv tool run --with mdformat-gfm --with mdformat-frontmatter mdformat --number .claude/ docs/ README.md
+    uv tool run --with mdformat-gfm --with mdformat-frontmatter mdformat --number .claude/ docs/ design_docs/ README.md
 
 # Lint Markdown files.
 lint: format
     @echo $'{{ BLUE }}Linting Markdown files...{{ RESET }}'
     docker pull {{ MARKDOWNLINT_IMAGE }} > /dev/null
-    docker run --pull always --rm -u "$(id -u):$(id -g)" -v "$(pwd)":/workdir {{ MARKDOWNLINT_IMAGE }} /workdir/.claude /workdir/docs /workdir/README.md
+    docker run --pull always --rm -u "$(id -u):$(id -g)" -v "$(pwd)":/workdir {{ MARKDOWNLINT_IMAGE }} /workdir/.claude /workdir/docs /workdir/design_docs /workdir/README.md
 
 # Run tests.
 test:
