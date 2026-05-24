@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks for a new JMdict release, downloads it if available, rewrites git
-# history to remove old compact dictionary blobs, rebuilds the compact
-# dictionary, and prompts before force-pushing to origin/main.
+# history to remove old dictionary blobs, rebuilds the dictionary files, and
+# prompts before force-pushing to origin/main.
 #
 # Usage:
 #   scripts/update_jmdict_and_compact_repo.sh [-f|--force]
@@ -52,12 +52,17 @@ git diff origin/main HEAD
 
 # ── Rewrite history and rebuild ───────────────────────────────────────────────
 git filter-repo --invert-paths \
-  --path dict/jmdict-compact.json.gz \
+  --path-glob 'dict/jmdict-*.json.gz' \
   --force
 git remote add origin git@github.com:nevdelap/go-reader.git 2>/dev/null ||
   git remote set-url origin git@github.com:nevdelap/go-reader.git
-scripts/compact_jmdict.py
-git add dict/jmdict-compact.json.gz
+
+if ! scripts/compact_jmdict.py; then
+  echo "Error: compact_jmdict.py failed"
+  exit 1
+fi
+
+git add dict/jmdict-*.json.gz
 git commit -m "Restore current dictionary after history rewrite."
 git gc --aggressive --prune=now
 read -rp "Push force to origin/main? (y/N) " confirm

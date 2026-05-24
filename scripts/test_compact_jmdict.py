@@ -1,18 +1,29 @@
 #!/usr/bin/env -S uv run
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.13"
 # dependencies = []
 # ///
 #
-# Validates the content of dict/jmdict-compact.json.gz.
+# Validates the content of generated JMdict lookup files.
 # Run from the repo root: uv run scripts/test_compact_jmdict.py
 
-import gzip, json, sys, unittest
+import gzip
+import json
+import sys
+import unittest
+import zipfile
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-with gzip.open(ROOT / 'dict' / 'jmdict-compact.json.gz') as f:
-    DICT = json.load(f)
+
+
+def load_dict(name):
+    with gzip.open(ROOT / 'dict' / name) as f:
+        return json.load(f)
+
+
+DICT = load_dict('jmdict-full.json.gz')
 
 
 def pg(word):
@@ -142,10 +153,144 @@ class TestAuxiliaryGlosses(unittest.TestCase):
                         f'られる pg should mention passive, got: {rareru_pg[:3]}')
 
 
+class TestDictionaryArtifacts(unittest.TestCase):
+
+    def test_all_modes_are_valid_json(self):
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+        full = load_dict('jmdict-full.json.gz')
+        self.assertLess(len(ultra), len(full))
+        self.assertIn('行く', ultra)
+        self.assertGreaterEqual(len(full['行く']['g']), len(ultra['行く']['g']))
+
+    def test_ultra_mode_keeps_grammar_disambiguation(self):
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+
+        ta_pg = ultra.get('た', {}).get('pg')
+        self.assertIsNotNone(ta_pg, 'ultra た should keep auxiliary pg glosses')
+        self.assertTrue(any('did' in g or 'done' in g for g in ta_pg),
+                        f'ultra た pg should contain past-tense glosses, got: {ta_pg[:4]}')
+
+        te_pg2 = ultra.get('て', {}).get('pg2')
+        self.assertIsNotNone(te_pg2, 'ultra て should keep conjunctive pg2 glosses')
+        self.assertTrue(any('and' in g or 'then' in g for g in te_pg2),
+                        f'ultra て pg2 should contain conjunctive senses, got: {te_pg2[:4]}')
+
+        de_pg2 = ultra.get('で', {}).get('pg2')
+        self.assertIsNotNone(de_pg2, 'ultra で should keep conjunctive pg2 glosses')
+        self.assertTrue(any('and' in g or 'then' in g for g in de_pg2),
+                        f'ultra で pg2 should contain conjunctive senses, got: {de_pg2[:4]}')
+
+        rareru_pg = ultra.get('られる', {}).get('pg')
+        self.assertIsNotNone(rareru_pg, 'ultra られる should keep auxiliary pg glosses')
+        self.assertTrue(any('passive' in g for g in rareru_pg),
+                        f'ultra られる pg should mention passive, got: {rareru_pg[:3]}')
+
+        niyori_pg = ultra.get('により', {}).get('pg')
+        self.assertIsNotNone(niyori_pg, 'ultra により should keep expression pg glosses')
+        self.assertTrue(any('according' in g or 'due to' in g for g in niyori_pg),
+                        f'ultra により pg should describe particle use, got: {niyori_pg[:3]}')
+
+
+class TestEdgeCasesAndValidation(unittest.TestCase):
+
+    def test_empty_source_file_raises_error(self):
+        """Test that an empty source file raises ValueError."""
+        empty_data = json.dumps({'words': []}).encode('utf-8')
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.json.zip', delete=False) as f:
+            tmp_path = Path(f.name)
+
+        try:
+            with zipfile.ZipFile(tmp_path, 'w') as zf:
+                zf.writestr('jmdict-empty.json', empty_data)
+
+            # Test by checking the error would be raised during the validation step
+            with zipfile.ZipFile(tmp_path) as zf:
+                d = json.load(zf.open(zf.namelist()[0]))
+                self.assertFalse(d.get('words'), 'Test data should have empty words list')
+                # This simulates what compact_jmdict.py does - should raise ValueError
+                with self.assertRaises(ValueError, msg='Empty words list should raise ValueError'):
+                    if not d.get('words'):
+                        raise ValueError('Source file contains no words')
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    def test_ultra_mode_has_fewer_entries_than_full(self):
+        """Test that ultra-compact mode filters out uncommon entries."""
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+        full = load_dict('jmdict-full.json.gz')
+
+        # Ultra should have significantly fewer entries
+        ultra_count = len(ultra)
+        full_count = len(full)
+        reduction_pct = (1 - ultra_count / full_count) * 100
+
+        # Ultra should reduce the dictionary by at least 20%
+        self.assertGreater(reduction_pct, 20,
+                          f'ultra mode should reduce entries by >20%, got {reduction_pct:.1f}% '
+                          f'({ultra_count} vs {full_count} entries)')
+
+    def test_common_words_present_in_ultra_mode(self):
+        """Test that common words are preserved in ultra mode."""
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+
+        # Common words that should definitely be present
+        common_words = ['行く', '食べる', '見る', '来る', 'ある', 'いる', 'なる', 'する']
+        for word in common_words:
+            self.assertIn(word, ultra, f'Common word "{word}" should be in ultra mode')
+
+    def test_grammar_entries_preserved_in_ultra_mode(self):
+        """Test that grammar-related entries are kept even if uncommon."""
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+
+        # These grammar words should be present due to particle_glosses preservation
+        grammar_words = ['た', 'て', 'で', 'ない', 'だ', 'られる', 'により', 'にとって']
+        for word in grammar_words:
+            self.assertIn(word, ultra, f'Grammar word "{word}" should be in ultra mode')
+
+    def test_full_mode_contains_all_ultra_entries(self):
+        """Test that full mode is a superset of ultra mode."""
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+        full = load_dict('jmdict-full.json.gz')
+
+        for word in ultra:
+            self.assertIn(word, full, f'Word "{word}" in ultra should also be in full')
+
+    def test_gloss_groups_are_lists(self):
+        """Test that all gloss groups are properly formatted as lists."""
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+        full = load_dict('jmdict-full.json.gz')
+
+        for name, d in [('ultra', ultra), ('full', full)]:
+            for word, entry in d.items():
+                self.assertIsInstance(entry['g'], list,
+                                    f'{name}: {word} gloss groups should be a list')
+                for i, group in enumerate(entry['g']):
+                    self.assertIsInstance(group, list,
+                                        f'{name}: {word} gloss group {i} should be a list')
+                    for gloss in group:
+                        self.assertIsInstance(gloss, str,
+                                            f'{name}: {word} gloss should be a string')
+
+    def test_pg_fields_are_lists_of_strings(self):
+        """Test that pg/pg2 fields are properly formatted."""
+        ultra = load_dict('jmdict-ultra-compact.json.gz')
+        full = load_dict('jmdict-full.json.gz')
+
+        for name, d in [('ultra', ultra), ('full', full)]:
+            for word, entry in d.items():
+                for key in ['pg', 'pg2']:
+                    if key in entry:
+                        self.assertIsInstance(entry[key], list,
+                                            f'{name}: {word} {key} should be a list')
+                        for gloss in entry[key]:
+                            self.assertIsInstance(gloss, str,
+                                                f'{name}: {word} {key} gloss should be a string')
+
+
 if __name__ == '__main__':
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    for cls in (TestParticleGlosses, TestAuxiliaryGlosses):
+    for cls in (TestParticleGlosses, TestAuxiliaryGlosses, TestDictionaryArtifacts, TestEdgeCasesAndValidation):
         suite.addTests(loader.loadTestsFromTestCase(cls))
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)

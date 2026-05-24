@@ -64,6 +64,8 @@
   </script>
   <!-- Set theme before first paint to avoid flash -->
   <script>!function () { var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; document.getElementById('themeColor').content = t === 'dark' ? '#000000' : '#f5f5f5' }()</script>
+  <!-- Prefetch selected dictionary before first paint -->
+  <script>!function () { var m = localStorage.getItem('dictionaryMode'); if (m !== 'ultra' && m !== 'full') m = 'full'; var l = document.createElement('link'); l.rel = 'prefetch'; l.href = 'dict/jmdict-' + (m === 'ultra' ? 'ultra-compact' : 'full') + '.json.gz?v=21'; document.head.appendChild(l); }()</script>
   <style>
     @font-face {
       font-family: 'Inter';
@@ -381,6 +383,129 @@
     #themeBtn {
       padding: 7px 9px;
       border-color: transparent;
+    }
+
+    .header-actions {
+      position: relative;
+      display: flex;
+      gap: 8px;
+    }
+
+    .settings-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: var(--z-panel-overlay);
+      width: min(320px, calc(100vw - 32px));
+      padding: 14px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      background: var(--bg-surface);
+      box-shadow: 0 10px 32px var(--overlay-shadow);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .settings-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .dictionary-mode-options {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .dictionary-mode-option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .dictionary-mode-option input {
+      align-self: start;
+      margin-top: 1px;
+      cursor: pointer;
+    }
+
+    .dictionary-mode-option span span {
+      display: block;
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .settings-note,
+    .settings-reload-note {
+      color: var(--text-dim);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .settings-reload-note {
+      margin-top: 10px;
+      color: var(--text);
+    }
+
+    .settings-reload-note button {
+      margin-top: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 8px 14px;
+      border-radius: 4px;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      border: 1px solid var(--accent);
+      background: var(--accent-pressed);
+      color: var(--hover-text);
+    }
+
+    .settings-reload-note button:focus-visible,
+    .settings-reload-note button:active {
+      background: var(--accent-dim);
+      border-color: var(--accent-dim);
+    }
+
+    @media (hover: hover) {
+      .settings-reload-note button:hover {
+        background: var(--accent-dim);
+        border-color: var(--accent-dim);
+      }
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .dictionary-mode-option input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-radius: 2px;
+    }
+
+    @media (max-width: 400px) {
+      .settings-popover {
+        right: -8px;
+        width: calc(100vw - 32px);
+      }
     }
 
     .toolbar-btn:focus-visible,
@@ -994,10 +1119,34 @@
     <header>
       <div class="header-left">
         <div class="logo">語 <span>Reader</span></div>
-        <div class="subtitle">Japanese Reader For Learners · v1.20.0</div>
+        <div class="subtitle">Japanese Reader For Learners · v1.21.0</div>
       </div>
-      <div style="display:flex; gap:8px;">
+      <div class="header-actions">
         <button type="button" id="helpBtn" class="toolbar-btn" title="Help">?</button>
+        <button type="button" id="settingsBtn" class="toolbar-btn" title="Settings" aria-label="Settings"
+          aria-expanded="false" aria-controls="settingsPopover"><span class="visually-hidden">Settings</span></button>
+        <div class="settings-popover hidden" id="settingsPopover" role="dialog" aria-modal="true"
+          aria-labelledby="settingsTitle">
+          <div class="settings-title" id="settingsTitle">Dictionary Settings</div>
+          <div class="dictionary-mode-options" role="radiogroup" aria-label="Dictionary size">
+            <label class="dictionary-mode-option" for="dictionaryModeUltra">
+              <input type="radio" id="dictionaryModeUltra" name="dictionaryMode" value="ultra">
+              <span>Ultra-compact ~1.7 MB <span>Common words plus grammar entries. Optimized for limited-memory
+                  devices.</span></span>
+            </label>
+            <label class="dictionary-mode-option" for="dictionaryModeFull">
+              <input type="radio" id="dictionaryModeFull" name="dictionaryMode" value="full">
+              <span>Full ~7.7 MB (default) <span>Complete English dictionary data. Richer definitions, slower startup,
+                  and higher memory use.</span></span>
+            </label>
+          </div>
+          <div class="settings-note">This one-page app loads the selected dictionary into your browser. Larger
+            dictionaries can take longer and may be a poor fit for devices where browsers evict tabs aggressively.</div>
+          <div class="settings-reload-note hidden" id="dictionaryReloadNote">
+            Reload to use the selected dictionary.
+            <button type="button" class="toolbar-btn" id="dictionaryReloadBtn">Reload</button>
+          </div>
+        </div>
         <button type="button" id="themeBtn" class="toolbar-btn"></button>
       </div>
     </header>
@@ -1209,24 +1358,39 @@
       if (!COMPRESSION_SUPPORTED) {
         throw new Error('DecompressionStream not supported');
       }
-      const res = await fetch('dict/jmdict-compact.json.gz?v=20');
-      if (!res.ok) throw new Error(`JMdict fetch failed: ${res.status}`);
-      if (res.headers.get('Content-Encoding') === 'gzip') {
-        // Server decompressed automatically (e.g. local dev server)
-        jmdict = await res.json();
-      } else {
-        // Raw gzip bytes — decompress manually (e.g. GitHub Pages)
-        const buf = await res.arrayBuffer();
-        const ds = new DecompressionStream('gzip');
-        const decompressed = new Response(new Blob([buf]).stream().pipeThrough(ds));
-        jmdict = JSON.parse(await decompressed.text());
+      const mode = activeDictionaryMode;
+      const modeLabel = mode === 'ultra' ? 'ultra-compact' : 'full';
+      const url = jmdictUrlForMode(mode);
+      let res;
+      try {
+        res = await fetch(url);
+      } catch (networkError) {
+        throw new Error(`Failed to fetch ${modeLabel} dictionary. Please check your internet connection and try again.`);
+      }
+      if (!res.ok) {
+        throw new Error(`Dictionary file not found (HTTP ${res.status}). Please try refreshing the page.`);
+      }
+      try {
+        if (res.headers.get('Content-Encoding') === 'gzip') {
+          jmdict = await res.json();
+        } else {
+          const buf = await res.arrayBuffer();
+          const ds = new DecompressionStream('gzip');
+          const decompressed = new Response(new Blob([buf]).stream().pipeThrough(ds));
+          jmdict = JSON.parse(await decompressed.text());
+        }
+      } catch (parseError) {
+        throw new Error(`Failed to parse ${modeLabel} dictionary. The file may be corrupted. Please try clearing your browser cache and refreshing.`);
+      }
+      if (!jmdict || typeof jmdict !== 'object') {
+        throw new Error(`Invalid ${modeLabel} dictionary format. Please try clearing your browser cache and refreshing.`);
       }
       jmdictLoaded = true;
     }
 
     // Kuromoji sometimes misanalyses godan imperatives as a form of the potential verb
     // (e.g. 払え → basic_form: 払える, 作れ → basic_form: 作れる). Neither potential form
-    // is in the compact dict, so we fall back to deriving the dict form from the surface.
+    // is in the dictionary, so we fall back to deriving the dict form from the surface.
     const IMPERATIVE_E_TO_U = { え: 'う', け: 'く', げ: 'ぐ', せ: 'す', て: 'つ', ね: 'ぬ', べ: 'ぶ', め: 'む', れ: 'る' };
 
     function lookupParticle(token) {
@@ -1298,6 +1462,29 @@
     const ICON_SUN = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
     const ICON_MOON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
     const ICON_SHARE = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
+    const ICON_SETTINGS = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.67 2h4.66l.65 3.12a7.6 7.6 0 0 1 1.18.68l3-1 2.33 4.04-2.35 2.12a7.84 7.84 0 0 1 0 1.36l2.35 2.12-2.33 4.04-3-1a7.6 7.6 0 0 1-1.18.68L14.33 22H9.67l-.65-3.12a7.6 7.6 0 0 1-1.18-.68l-3 1-2.33-4.04 2.35-2.12a7.84 7.84 0 0 1 0-1.36L2.51 9.56 4.84 5.52l3 1a7.6 7.6 0 0 1 1.18-.68L9.67 2Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+    // Polyfill for Object.hasOwn (Chrome 93+, Safari 15.4+, Firefox 92+)
+    const objectHasOwn = Object.hasOwn || ((obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop));
+
+    const DICTIONARY_MODE_KEY = 'dictionaryMode';
+    const DICTIONARY_MODES = {
+      ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=21' },
+      full: { path: 'dict/jmdict-full.json.gz?v=21' },
+    };
+
+    function savedDictionaryMode() {
+      const mode = localStorage.getItem(DICTIONARY_MODE_KEY);
+      if (objectHasOwn(DICTIONARY_MODES, mode)) return mode;
+      localStorage.removeItem(DICTIONARY_MODE_KEY);
+      return 'full';
+    }
+
+    const activeDictionaryMode = savedDictionaryMode();
+
+    function jmdictUrlForMode(mode) {
+      return DICTIONARY_MODES[objectHasOwn(DICTIONARY_MODES, mode) ? mode : 'full'].path;
+    }
 
     function applyTheme(dark) {
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
@@ -1308,6 +1495,79 @@
 
     let isDark = document.documentElement.dataset.theme !== 'light';
     applyTheme(isDark);
+
+    // ── Settings ─────────────────────────────────────────────────────────────────
+    $('settingsBtn').innerHTML = ICON_SETTINGS;
+
+    let settingsFocusTrap = null;
+
+    function setSettingsOpen(open) {
+      const popover = $('settingsPopover');
+      popover.classList.toggle('hidden', !open);
+      $('settingsBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+
+      if (open) {
+        const focusable = popover.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        settingsFocusTrap = e => {
+          if (e.key !== 'Tab') return;
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        };
+
+        popover.addEventListener('keydown', settingsFocusTrap);
+        first?.focus();
+      } else {
+        if (settingsFocusTrap) {
+          popover.removeEventListener('keydown', settingsFocusTrap);
+          settingsFocusTrap = null;
+        }
+        $('settingsBtn').focus({ preventScroll: true });
+      }
+    }
+
+    function updateDictionaryReloadNote() {
+      const selected = document.querySelector('input[name="dictionaryMode"]:checked')?.value;
+      $('dictionaryReloadNote').classList.toggle('hidden', selected === activeDictionaryMode);
+    }
+
+    const radioInputs = document.querySelectorAll('input[name="dictionaryMode"]');
+    if (radioInputs.length === 0) {
+      console.error('No dictionary mode radio inputs found. Settings will not function correctly.');
+    }
+    radioInputs.forEach(input => {
+      input.checked = input.value === activeDictionaryMode;
+      input.addEventListener('change', () => {
+        localStorage.setItem(DICTIONARY_MODE_KEY, input.value);
+        updateDictionaryReloadNote();
+      });
+    });
+    updateDictionaryReloadNote();
+
+    $('settingsBtn').addEventListener('click', e => {
+      e.stopPropagation();
+      setSettingsOpen($('settingsPopover').classList.contains('hidden'));
+    });
+
+    $('settingsPopover').addEventListener('click', e => e.stopPropagation());
+    $('dictionaryReloadBtn').addEventListener('click', () => location.reload());
+
+    document.addEventListener('click', e => {
+      if (!$('settingsPopover').classList.contains('hidden') && !$('settingsPopover').contains(e.target) && e.target !== $('settingsBtn')) {
+        setSettingsOpen(false);
+      }
+    });
 
     $('themeBtn').addEventListener('click', () => {
       isDark = !isDark;
@@ -1399,8 +1659,9 @@
 
     async function initWithRetry(attempt = 1) {
       try {
+        const modeLabel = activeDictionaryMode === 'ultra' ? 'ultra-compact' : 'full';
         setStatus(
-          attempt === 1 ? 'Loading dictionaries…' : `Loading dictionaries… (attempt ${attempt}/${MAX_RETRIES})`,
+          attempt === 1 ? `Loading ${modeLabel} dictionary…` : `Loading ${modeLabel} dictionary… (attempt ${attempt}/${MAX_RETRIES})`,
           'info'
         );
         hide($('emptyState'));
@@ -1583,7 +1844,13 @@
       } else {
         const result = lookupWord(token.surface_form, token.basic_form);
         $('panelPos').textContent = (result && result.pos) || getPOS(token);
-        eng.textContent = result ? result.eng : resolvedForm(token);
+        if (result) {
+          eng.textContent = result.eng;
+        } else {
+          eng.textContent = activeDictionaryMode === 'ultra'
+            ? 'Sorry, the morpheme was not found in the ulta-compact dictionary. You may consider turning on the full dictionary in the settings.'
+            : 'Sorry, the morpheme was not found in the full dictionary.';
+        }
       }
 
       // Measure height synchronously before showing to avoid jump on first open
@@ -1872,7 +2139,9 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         const welcomeOverlay = $('welcomeOverlay');
-        if (welcomeOverlay && !welcomeOverlay.classList.contains('hidden')) {
+        if (!$('settingsPopover').classList.contains('hidden')) {
+          setSettingsOpen(false);
+        } else if (welcomeOverlay && !welcomeOverlay.classList.contains('hidden')) {
           hide(welcomeOverlay);
         } else {
           const wasTokenFocused = document.activeElement?.classList.contains('token');

@@ -1,0 +1,5 @@
+[project]
+name = "go-reader"
+version = "0"                    # Python scripts are not part of the app versioning.
+requires-python = ">=3.13"
+dependencies = ["zopfli>=0.4.1"]

@@ -24,6 +24,8 @@ stats; your reading text is not sent to it by the app.
 - **Hiragana readings** — see how any morpheme is pronounced
 - **Browser-local reading** — once the app and dictionaries are loaded, lookups
   run locally in your browser and may keep working from the browser cache
+- **Dictionary size setting** — choose ultra-compact (~1.7 MB) or full (~7.7 MB, default) English
+  dictionary data depending on the device and level of detail you want
 - **Light and dark modes** — follows your system preference, or can be set
   manually
 - **Mobile-friendly** — works on phones and tablets
@@ -39,7 +41,8 @@ counts, and is skipped when browser Do Not Track is enabled.
   pure JavaScript Japanese morphological analyzer
 - **Dictionary lookups** — [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html),
   the Electronic Dictionary Research and Development Group's Japanese-English
-  dictionary, bundled as `dict/jmdict-compact.json.gz`
+  dictionary, bundled in ultra-compact (~1.7 MB) and full (~7.7 MB) English
+  lookup files with cache-busting URLs (`v=` parameter matches minor version)
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 
@@ -65,6 +68,7 @@ just serve         # serve locally and open in browser
 just format        # format Markdown
 just lint          # format then lint
 just test          # run tests
+just build-dict    # refresh source if needed and rebuild JMdict lookup files
 just tag_and_push  # tag the release and push
 ```
 
@@ -91,7 +95,7 @@ scripts/update_jmdict_and_compact_repo.sh
 ```
 
 The script checks for a new JMdict release, downloads it if one is available,
-rebuilds the compact dictionary, rewrites git history to remove old dictionary
+rebuilds the dictionary files, rewrites git history to remove old dictionary
 blobs, and prompts before force-pushing.
 
 Note: GitHub will also periodically run its own garbage collection on the server

@@ -4,6 +4,11 @@ MARKDOWNLINT_IMAGE := "ghcr.io/igorshubovych/markdownlint-cli:latest"
 BLUE := '\033[0;34m'
 RESET := '\033[0m'
 
+# Codex sandboxes can make uv's default cache read-only. Claude Code and manual
+# local runs work with the normal cache, so only use the fallback when needed or
+# if UV_CACHE_DIR is already set by the caller.
+UV_CACHE := "if [[ -z \"${UV_CACHE_DIR:-}\" && ! -w \"${XDG_CACHE_HOME:-$HOME/.cache}/uv\" ]]; then export UV_CACHE_DIR=/home/nevd/.tmp/uv-cache; fi"
+
 # Show help.
 @_:
     just --list
@@ -30,7 +35,12 @@ lint: format
 # Run tests.
 test:
     node test.js
-    uv run scripts/test_compact_jmdict.py
+    {{ UV_CACHE }}; uv run scripts/test_compact_jmdict.py
+
+# Download source if needed and generate JMdict lookup files.
+build-dict:
+    {{ UV_CACHE }}; uv run scripts/download_jmdict_source.py
+    {{ UV_CACHE }}; uv run scripts/compact_jmdict.py
 
 # Tag the release and push.
 tag_and_push: lint

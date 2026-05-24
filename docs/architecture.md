@@ -8,10 +8,10 @@ A single-file static Japanese reader. No server, no build step — deploys anywh
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `index.html`                                | Entire app — HTML, CSS, and JavaScript                                                                                 |
 | `kuromoji.js`                               | Japanese morphological analyzer (runs in the browser)                                                                  |
-| `dict/jmdict-compact.json.gz`               | Compact gzipped JMdict lookup data (morpheme → English glosses)                                                        |
+| `dict/jmdict-*.json.gz`                     | Ultra-compact and full gzipped JMdict lookup data (morpheme → English glosses)                                         |
 | `dict/`                                     | Binary dictionary files loaded by kuromoji at runtime                                                                  |
-| `scripts/compact_jmdict.py`                 | Build script: preprocesses full JMdict JSON into compact form                                                          |
-| `scripts/update_jmdict_and_compact_repo.sh` | Checks for a new JMdict release, downloads it, rebuilds the compact dict, and rewrites git history to remove old blobs |
+| `scripts/compact_jmdict.py`                 | Build script: preprocesses full JMdict JSON into browser lookup files                                                  |
+| `scripts/update_jmdict_and_compact_repo.sh` | Checks for a new JMdict release, downloads it, rebuilds dictionary files, and rewrites git history to remove old blobs |
 | `scripts/local_serve.py`                    | Local dev server                                                                                                       |
 | `scripts/pre-push`                          | Git pre-push hook                                                                                                      |
 | `manifest.json` / `favicon.svg`             | PWA manifest and icon                                                                                                  |
@@ -24,7 +24,7 @@ ______________________________________________________________________
   Japanese morphological analyzer. Loads binary dictionary files from `dict/` at
   startup, then tokenizes text entirely in-browser.
 - **[JMdict](https://www.edrdg.org/jmdict/j_jmdict.html)** — Japanese-English
-  dictionary from EDRDG, bundled as a compact gzipped JSON lookup table.
+  dictionary from EDRDG, bundled as gzipped JSON lookup tables.
 - **[Lucide](https://lucide.dev/)** — ISC-licensed icon set. The sun and moon
   icons are inlined as SVG in `index.html` for the theme toggle; no external
   dependency.
@@ -66,35 +66,41 @@ ______________________________________________________________________
 
 ## Dictionary Build
 
-The full JMdict JSON is ~50 MB — too large to load in a browser.
-`scripts/compact_jmdict.py` reduces it to a flat map containing only what the
-app needs:
+The source JMdict English JSON is large, so `scripts/compact_jmdict.py` reduces
+it to flat maps containing only what the app needs:
 
 ```json
 { "word": {"p": ["n", ...], "g": [["gloss1", "gloss2", ...], ...]}, ... }
 ```
 
-- Only the first sense that has English glosses is used — secondary senses are
-  discarded
-- All English glosses from that sense are kept
+- `jmdict-ultra-compact.json.gz` (~1.7 MB gzipped) keeps entries marked common by
+  JMdict priority data plus grammar-related entries used for particle/auxiliary
+  disambiguation, with all English senses for each kept entry.
+- `jmdict-full.json.gz` (~7.7 MB gzipped) is the default. It keeps all English
+  entries and every English sense.
 - `g` is a list of gloss groups — one inner list per JMdict entry; groups are
   displayed joined with `,` within a group and `;` between groups
 - On key collision (multiple entries share the same kanji/kana form), the common
   entry wins over an uncommon entry; entries of equal priority are merged
   (glosses appended as a new group, POS tags combined)
-- Output: `dict/jmdict-compact.json.gz` (~7.1 MB gzipped)
+- Outputs are written atomically to avoid leaving corrupt gzip files if
+  generation is interrupted.
 
-To regenerate, see [Maintaining the
+Run `just build-dict` to regenerate. See [Maintaining the
 repository](../README.md#maintaining-the-repository) in the README.
 
 ______________________________________________________________________
 
 ## Dictionary Loading
 
-At startup, kuromoji and JMdict are loaded in parallel. The browser decompresses
-`dict/jmdict-compact.json.gz` using the native `DecompressionStream` API (falls back
-to server-decompressed response when a local dev server handles gzip
-automatically).
+At startup, kuromoji and the selected JMdict file are loaded in parallel. The
+browser decompresses the selected gzip using the native `DecompressionStream`
+API (falls back to server-decompressed response when a local dev server handles
+gzip automatically).
+
+The dictionary mode is stored in `localStorage` as `dictionaryMode`.
+Unrecognized values fall back to `full`. Changes made in settings apply
+after reload.
 
 Up to 5 retry attempts with increasing delays (2s, 4s, 6s…) if either load
 fails.
@@ -116,7 +122,7 @@ When a token is tapped or clicked, `lookupWord(surface_form, basic_form)` tries:
    is replaced with its -u row equivalent to derive the dictionary form (e.g.
    `払え` → `払う`). This corrects a kuromoji misanalysis where godan imperatives
    are tagged as potential-form verbs (e.g. `払え` gets `basic_form: 払える`),
-   whose potential form is not in the compact dictionary.
+   whose potential form is not in the selected dictionary.
 
 Both results from steps 1–2 are returned when found, joined with a semicolon and
 space. This handles conjugated verbs and adjectives, and surfaces homograph
@@ -131,7 +137,7 @@ Katakana readings from kuromoji are converted to hiragana for display
 
 Words that function as particles or auxiliary verbs often have a primary JMdict
 entry that describes their non-grammatical meaning (e.g., て as a quoting
-particle,って). To ensure correct glosses in grammar contexts, the compact
+particle,って). To ensure correct glosses in grammar contexts, the generated
 dictionary includes a `pg` field containing glosses from grammar-related senses:
 
 - **Source senses**: JMdict entries tagged as particle (`prt`), expression
@@ -191,6 +197,9 @@ ______________________________________________________________________
   the native share sheet on touch devices), "E.G." loads a sample text; all
   return focus to the textarea
 - **Help button** — a "?" button in the header reopens the welcome overlay
+- **Settings button** — a cog button in the header opens dictionary mode
+  settings. The mode can be ultra-compact or full, and applies after
+  reload.
 - **Keyboard shortcuts** — see dedicated section below
 - **Input deduplication** — if the raw input hasn't changed since last
   tokenization, rendering is skipped
@@ -213,10 +222,11 @@ ______________________________________________________________________
   dimmed grammar tokens (default, `--text-grammar` color) and uniform coloring.
   The button label reflects the current state: "Dim grammar" / "Undim grammar".
   Preference is stored in `localStorage` (`dimGrammar`).
-- **Persistence** — theme choice, reading direction, dim-grammar preference,
-  welcome overlay dismissal, raw textarea input, and the selected morpheme are
-  all stored in `localStorage` and restored on load. The selected morpheme is
-  tied to the raw textarea value and cleared as soon as the textarea is edited.
+- **Persistence** — theme choice, dictionary mode, reading direction,
+  dim-grammar preference, welcome overlay dismissal, raw textarea input, and the
+  selected morpheme are all stored in `localStorage` and restored on load. The
+  selected morpheme is tied to the raw textarea value and cleared as soon as the
+  textarea is edited.
 
 ______________________________________________________________________
 
@@ -282,5 +292,5 @@ ______________________________________________________________________
 
 The app is fully static — serve `index.html` and the supporting files from any
 static host. Fonts are vendored in `fonts/`. On first load, the browser fetches
-`dict/jmdict-compact.json.gz`, the local font files, and the kuromoji binary
+the selected `dict/jmdict-*.json.gz` file, the local font files, and the kuromoji binary
 dictionary files in `dict/`.
