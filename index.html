@@ -1010,7 +1010,7 @@
             <textarea id="inputText" placeholder="日本語のテキストを貼り付けてください。" rows="3"
               aria-label="Japanese text input"></textarea>
             <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
-              <button type="button" id="clearBtn" class="toolbar-btn" title="Ctrl+K">Clear All</button>
+              <button type="button" id="clearBtn" class="toolbar-btn" title="Ctrl+K">Clear</button>
               <button type="button" id="clearUpBtn" class="toolbar-btn" title="Clear from cursor to top">Clear Up</button>
               <button type="button" id="pasteBtn" class="toolbar-btn" title="Ctrl+V">Paste</button>
               <button type="button" id="copyUrlBtn" class="toolbar-btn"
@@ -1297,6 +1297,7 @@
     // ── Theme ────────────────────────────────────────────────────────────────────
     const ICON_SUN = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;
     const ICON_MOON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+    const ICON_SHARE = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
 
     function applyTheme(dark) {
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
@@ -1953,7 +1954,7 @@
       $('copyUrlBtn').setAttribute('disabled', 'disabled');
       $('copyUrlBtn').title = 'Shareable links require a browser with compression API support (Safari 16.4+, Firefox 113+, Chrome 80+)';
     } else {
-      $('copyUrlBtn').textContent = (navigator.maxTouchPoints > 0) ? 'Share' : 'Copy URL';
+      $('copyUrlBtn').innerHTML = (navigator.maxTouchPoints > 0) ? ICON_SHARE : 'Copy URL';
     }
     $('copyUrlBtn').addEventListener('click', async () => {
       const text = $('inputText').value;
