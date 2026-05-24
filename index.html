@@ -1069,7 +1069,7 @@
           websites, or learning materials, then <strong><span class="overlay-desktop">click</span><span
               class="overlay-mobile">tap</span> any morpheme</strong> to see its reading
           and English meaning. <strong><span class="overlay-desktop">Click</span><span class="overlay-mobile">Tap</span>
-            the EXAMPLE button</strong> to try the app with sample text and explore
+            the E.G. button</strong> to try the app with sample text and explore
           its features.</p>
         <ul>
           <li><strong>No AI</strong> — Dictionary lookups happen locally in your browser, fast and private</li>
@@ -1209,7 +1209,7 @@
       if (!COMPRESSION_SUPPORTED) {
         throw new Error('DecompressionStream not supported');
       }
-      const res = await fetch('dict/jmdict-compact.json.gz?v=19');
+      const res = await fetch('dict/jmdict-compact.json.gz?v=20');
       if (!res.ok) throw new Error(`JMdict fetch failed: ${res.status}`);
       if (res.headers.get('Content-Encoding') === 'gzip') {
         // Server decompressed automatically (e.g. local dev server)

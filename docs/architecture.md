@@ -184,12 +184,12 @@ ______________________________________________________________________
 - **Panel height tracking** — a `ResizeObserver` keeps `--panel-height` in sync
   so the token area scrolls far enough to keep the active token visible above
   the bottom panel
-- **Input buttons** — "CLEAR" clears the textarea, "CLEAR AND PASTE" clears the
-  textarea then reads from the clipboard (falls back to an error message on
-  permission denial), "Copy URL" / "Share" encodes the current input as a
-  compressed URL fragment and copies it to the clipboard (or invokes the native
-  share sheet on touch devices), "Example" loads a sample text; all return focus
-  to the textarea
+- **Input buttons** — "Clear" clears the textarea, "Clear Up" clears from cursor
+  to top, "Paste" reads from the clipboard (falls back to an error message on
+  permission denial), "Copy URL" / "Share" (icon on mobile) encodes the current
+  input as a compressed URL fragment and copies it to the clipboard (or invokes
+  the native share sheet on touch devices), "E.G." loads a sample text; all
+  return focus to the textarea
 - **Help button** — a "?" button in the header reopens the welcome overlay
 - **Keyboard shortcuts** — see dedicated section below
 - **Input deduplication** — if the raw input hasn't changed since last
