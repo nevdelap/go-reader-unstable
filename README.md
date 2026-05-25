@@ -42,7 +42,7 @@ counts, and is skipped when browser Do Not Track is enabled.
 - **Dictionary lookups** — [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html),
   the Electronic Dictionary Research and Development Group's Japanese-English
   dictionary, bundled in ultra-compact (~1.7 MB) and full (~7.7 MB) English
-  lookup files with cache-busting URLs (`v=` parameter matches minor version)
+  lookup files with cache-busting URLs (`?v=21` parameter)
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 

@@ -105,8 +105,7 @@ after reload.
 Up to 5 retry attempts with increasing delays (2s, 4s, 6s…) if either load
 fails.
 
-The dictionary URL includes a `?v=N` cache-bust parameter; increment `N` after
-each rebuild to force clients past the browser cache.
+The dictionary URL includes a `?v=N` cache-bust parameter (currently `?v=21`).
 
 ______________________________________________________________________
 
@@ -118,11 +117,13 @@ When a token is tapped or clicked, `lookupWord(surface_form, basic_form)` tries:
    `surface_form` or `*`
 2. `surface_form` — the exact text as it appears (e.g. `食べました`)
 3. **Godan imperative fallback** — if both lookups fail and the surface form
-   ends in an -e row kana (え, け, げ, せ, て, ね, べ, め, れ), the final kana
-   is replaced with its -u row equivalent to derive the dictionary form (e.g.
-   `払え` → `払う`). This corrects a kuromoji misanalysis where godan imperatives
-   are tagged as potential-form verbs (e.g. `払え` gets `basic_form: 払える`),
-   whose potential form is not in the selected dictionary.
+   ends in a Japanese e-row kana (え, け, げ, せ, て, ね, べ, め, れ), the final kana
+   is replaced with its corresponding u-row kana (う, く, ぐ, す, つ, ぬ, ぶ, む, る)
+   to derive the dictionary form (e.g. `払え` → `払う`). This corrects a kuromoji
+   misanalysis where godan imperatives are tagged as potential-form verbs
+   (e.g. `払え` gets `basic_form: 払える`), whose potential form is not in the
+   selected dictionary. The ぬ mapping is included but the fallback is rarely
+   reached since 死ね has its own dictionary entry as an interjection.
 
 Both results from steps 1–2 are returned when found, joined with a semicolon and
 space. This handles conjugated verbs and adjectives, and surfaces homograph

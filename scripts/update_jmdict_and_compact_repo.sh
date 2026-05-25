@@ -64,6 +64,6 @@ fi
 
 git add dict/jmdict-*.json.gz
 git commit -m "Restore current dictionary after history rewrite."
-git gc --aggressive --prune=now
+git gc --prune=now
 read -rp "Push force to origin/main? (y/N) " confirm
 [[ "$confirm" == [yY] ]] && git push origin HEAD:main --force && git push origin --tags --force --no-verify || echo "Aborted."

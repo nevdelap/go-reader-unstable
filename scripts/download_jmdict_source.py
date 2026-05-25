@@ -7,7 +7,7 @@ import json
 import re
 import urllib.request
 import urllib.error
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 REPO = 'https://api.github.com/repos/scriptin/jmdict-simplified/releases/latest'
@@ -15,9 +15,9 @@ ROOT = Path(__file__).parent.parent
 
 
 def is_fresh(path: Path) -> bool:
-    """Return True if the file was modified today (after midnight)."""
-    mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
-    today = datetime.now(timezone.utc).date()
+    """Return True if the file was modified today (after midnight local time)."""
+    mtime = datetime.fromtimestamp(path.stat().st_mtime)
+    today = datetime.now().date()
     return mtime.date() == today
 
 

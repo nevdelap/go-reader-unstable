@@ -65,10 +65,11 @@ def _entry_gloss_groups(entry: dict[str, Any], max_senses: int | None = None) ->
     return groups
 
 
-def build_dict(max_senses: int | None = None, common_only: bool = False) -> dict[str, dict[str, Any]]:
+def build_dict(jmdict_data: dict[str, Any], max_senses: int | None = None, common_only: bool = False) -> dict[str, dict[str, Any]]:
     """Build a dictionary from JMdict entries.
 
     Args:
+        jmdict_data: The JMdict data containing words
         max_senses: Maximum number of senses to include per entry (None = all)
         common_only: If True, only include common entries and grammar-related entries
 
@@ -78,7 +79,7 @@ def build_dict(max_senses: int | None = None, common_only: bool = False) -> dict
     out: dict[str, dict[str, Any]] = {}
     common: dict[str, bool] = {}
 
-    for entry in d['words']:
+    for entry in jmdict_data['words']:
         is_common = any(k.get('common', False) for k in entry['kanji'] + entry['kana'])
 
         first_sense = next(
@@ -150,7 +151,7 @@ def write_dict(out: dict[str, dict[str, Any]], output: Path) -> None:
         ValueError: If the output dictionary is empty
     """
     data = json.dumps(out, ensure_ascii=False, separators=(',', ':'))
-    json_size = len(data.encode()) / 1024 / 1024
+    json_size = len(data.encode('utf-8')) / 1024 / 1024
     print(f'{output.name}: entries={len(out)}, JSON={json_size:.1f}MB')
 
     if len(out) == 0:
@@ -189,6 +190,6 @@ if not d.get('words'):
 print(f"Loaded {len(d['words'])} entries from {source}")
 
 # Build and write both dictionary modes
-write_dict(build_dict(common_only=True), Path('dict') / 'jmdict-ultra-compact.json.gz')
-write_dict(build_dict(), Path('dict') / 'jmdict-full.json.gz')
+write_dict(build_dict(d, common_only=True), Path('dict') / 'jmdict-ultra-compact.json.gz')
+write_dict(build_dict(d), Path('dict') / 'jmdict-full.json.gz')
 print('Done')

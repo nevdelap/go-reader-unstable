@@ -9,6 +9,9 @@ const { readFileSync } = require('node:fs');
 const { gunzipSync } = require('node:zlib');
 const { join } = require('node:path');
 
+// Polyfill for Object.hasOwn (for Node.js < 16.9.0)
+const objectHasOwn = Object.hasOwn || ((obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop));
+
 // ── Functions under test (inlined from index.html) ───────────────────────────
 
 function toHiragana(str) {
@@ -82,13 +85,13 @@ const DICTIONARY_MODES = {
 
 function savedDictionaryMode(storage) {
   const mode = storage.getItem('dictionaryMode');
-  if (Object.hasOwn(DICTIONARY_MODES, mode)) return mode;
+  if (objectHasOwn(DICTIONARY_MODES, mode)) return mode;
   storage.removeItem('dictionaryMode');
   return 'full';
 }
 
 function jmdictUrlForMode(mode) {
-  return DICTIONARY_MODES[Object.hasOwn(DICTIONARY_MODES, mode) ? mode : 'full'].path;
+  return DICTIONARY_MODES[objectHasOwn(DICTIONARY_MODES, mode) ? mode : 'full'].path;
 }
 
 function resolvedForm(token) {
@@ -529,8 +532,8 @@ test('textToHash / hashToText round-trip', async (t) => {
 // ── Dictionary modes ────────────────────────────────────────────────────────────
 
 test('DICTIONARY_MODES constant has expected structure', () => {
-  assert.ok(Object.hasOwn(DICTIONARY_MODES, 'ultra'));
-  assert.ok(Object.hasOwn(DICTIONARY_MODES, 'full'));
+  assert.ok(objectHasOwn(DICTIONARY_MODES, 'ultra'));
+  assert.ok(objectHasOwn(DICTIONARY_MODES, 'full'));
   assert.equal(typeof DICTIONARY_MODES.ultra.path, 'string');
   assert.equal(typeof DICTIONARY_MODES.full.path, 'string');
   assert.ok(DICTIONARY_MODES.ultra.path.includes('jmdict-ultra-compact.json.gz'));

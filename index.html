@@ -590,10 +590,6 @@
       display: none;
     }
 
-    .overlay-desktop-only {
-      display: list-item;
-    }
-
     @media (max-width: 600px) {
       .controls-sticky-scroll {
         max-height: calc(100dvh - var(--sticky-controls-offset));
@@ -614,10 +610,6 @@
 
       .overlay-mobile {
         display: inline;
-      }
-
-      .overlay-desktop-only {
-        display: none;
       }
     }
 
@@ -1223,10 +1215,10 @@
         <ul>
           <li><strong>No AI</strong> — Dictionary lookups happen locally in your browser, fast and private</li>
           <li><strong>Grammar morphemes</strong> — Toggle dimming for enhanced learning</li>
-          <li class="overlay-desktop-only"><strong>Keyboard shortcuts</strong> — Ctrl+K to clear text, Ctrl+V to paste,
+          <li><span class="overlay-desktop"><strong>Keyboard shortcuts</strong> — Ctrl+K to clear text, Ctrl+V to paste,
             Alt+D to toggle reading
             direction, Enter in panel to enlarge morpheme to clearly see kanji form and distinguish dakuten and
-            handakuten</li>
+            handakuten</span></li>
           <li><strong>Everything stays in your browser</strong> — No login, no server, no ads, no tracking <sup>2</sup>
           </li>
         </ul>
@@ -1537,9 +1529,11 @@
       }
     }
 
-    function updateDictionaryReloadNote() {
-      const selected = document.querySelector('input[name="dictionaryMode"]:checked')?.value;
-      $('dictionaryReloadNote').classList.toggle('hidden', selected === activeDictionaryMode);
+    function updateDictionaryReloadNote(selectedValue) {
+      if (selectedValue === undefined) {
+        selectedValue = document.querySelector('input[name="dictionaryMode"]:checked')?.value;
+      }
+      $('dictionaryReloadNote').classList.toggle('hidden', selectedValue === activeDictionaryMode);
     }
 
     const radioInputs = document.querySelectorAll('input[name="dictionaryMode"]');
@@ -1550,7 +1544,7 @@
       input.checked = input.value === activeDictionaryMode;
       input.addEventListener('change', () => {
         localStorage.setItem(DICTIONARY_MODE_KEY, input.value);
-        updateDictionaryReloadNote();
+        updateDictionaryReloadNote(input.value);
       });
     });
     updateDictionaryReloadNote();
@@ -1848,7 +1842,7 @@
           eng.textContent = result.eng;
         } else {
           eng.textContent = activeDictionaryMode === 'ultra'
-            ? 'Sorry, the morpheme was not found in the ulta-compact dictionary. You may consider turning on the full dictionary in the settings.'
+            ? 'Sorry, the morpheme was not found in the ultra-compact dictionary. You may consider turning on the full dictionary in the settings.'
             : 'Sorry, the morpheme was not found in the full dictionary.';
         }
       }
@@ -2155,6 +2149,7 @@
       if (e.key === 'k' && e.ctrlKey) { e.preventDefault(); $('clearBtn').click(); return; }
       if (document.activeElement === $('inputText')) return;
       if (e.key === 'v' && e.ctrlKey) { e.preventDefault(); $('pasteBtn').click(); }
+      if (e.key === '?') { e.preventDefault(); $('helpBtn').click(); }
     });
 
     // ── Example text ─────────────────────────────────────────────────────────────
