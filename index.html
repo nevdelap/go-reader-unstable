@@ -65,7 +65,7 @@
   <!-- Set theme before first paint to avoid flash -->
   <script>!function () { var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; document.getElementById('themeColor').content = t === 'dark' ? '#000000' : '#f5f5f5' }()</script>
   <!-- Prefetch selected dictionary before first paint -->
-  <script>!function () { var m = localStorage.getItem('dictionaryMode'); if (m !== 'ultra' && m !== 'full') m = 'full'; var l = document.createElement('link'); l.rel = 'prefetch'; l.href = 'dict/jmdict-' + (m === 'ultra' ? 'ultra-compact' : 'full') + '.json.gz?v=21'; document.head.appendChild(l); }()</script>
+  <script>!function () { var m = localStorage.getItem('dictionaryMode'); if (m !== 'ultra' && m !== 'full') m = 'full'; var l = document.createElement('link'); l.rel = 'prefetch'; l.href = 'dict/jmdict-' + (m === 'ultra' ? 'ultra-compact' : 'full') + '.json.gz?v=22'; document.head.appendChild(l); }()</script>
   <style>
     @font-face {
       font-family: 'Inter';
@@ -383,6 +383,23 @@
     #themeBtn {
       padding: 7px 9px;
       border-color: transparent;
+    }
+
+    #helpBtn {
+      padding: 7px 9px;
+      border-color: transparent;
+    }
+
+    #settingsBtn {
+      padding: 7px 9px;
+      border-color: transparent;
+    }
+
+    @media (hover: hover) {
+      #copyUrlBtn {
+        width: 8.5em;
+        text-align: center;
+      }
     }
 
     .header-actions {
@@ -1111,10 +1128,10 @@
     <header>
       <div class="header-left">
         <div class="logo">語 <span>Reader</span></div>
-        <div class="subtitle">Japanese Reader For Learners · v1.21.0</div>
+        <div class="subtitle">Japanese Reader For Learners · v1.22.0</div>
       </div>
       <div class="header-actions">
-        <button type="button" id="helpBtn" class="toolbar-btn" title="Help">?</button>
+        <button type="button" id="helpBtn" class="toolbar-btn" title="Help" aria-label="Help"></button>
         <button type="button" id="settingsBtn" class="toolbar-btn" title="Settings" aria-label="Settings"
           aria-expanded="false" aria-controls="settingsPopover"><span class="visually-hidden">Settings</span></button>
         <div class="settings-popover hidden" id="settingsPopover" role="dialog" aria-modal="true"
@@ -1455,14 +1472,16 @@
     const ICON_MOON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
     const ICON_SHARE = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
     const ICON_SETTINGS = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.67 2h4.66l.65 3.12a7.6 7.6 0 0 1 1.18.68l3-1 2.33 4.04-2.35 2.12a7.84 7.84 0 0 1 0 1.36l2.35 2.12-2.33 4.04-3-1a7.6 7.6 0 0 1-1.18.68L14.33 22H9.67l-.65-3.12a7.6 7.6 0 0 1-1.18-.68l-3 1-2.33-4.04 2.35-2.12a7.84 7.84 0 0 1 0-1.36L2.51 9.56 4.84 5.52l3 1a7.6 7.6 0 0 1 1.18-.68L9.67 2Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const ICON_HELP = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+    const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#027864" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
 
     // Polyfill for Object.hasOwn (Chrome 93+, Safari 15.4+, Firefox 92+)
     const objectHasOwn = Object.hasOwn || ((obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop));
 
     const DICTIONARY_MODE_KEY = 'dictionaryMode';
     const DICTIONARY_MODES = {
-      ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=21' },
-      full: { path: 'dict/jmdict-full.json.gz?v=21' },
+      ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=22' },
+      full: { path: 'dict/jmdict-full.json.gz?v=22' },
     };
 
     function savedDictionaryMode() {
@@ -1489,6 +1508,7 @@
     applyTheme(isDark);
 
     // ── Settings ─────────────────────────────────────────────────────────────────
+    $('helpBtn').innerHTML = ICON_HELP;
     $('settingsBtn').innerHTML = ICON_SETTINGS;
 
     let settingsFocusTrap = null;
@@ -2244,9 +2264,17 @@
             document.body.removeChild(el);
           }
           const btn = $('copyUrlBtn');
-          const originalLabel = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => { btn.textContent = originalLabel; }, 1500);
+          const originalLabel = btn.innerHTML;
+          const originalColor = btn.style.color;
+          const isIcon = originalLabel.includes('<svg');
+          btn.innerHTML = isIcon ? ICON_CHECK : 'Copied!';
+          if (!isIcon) btn.style.color = '#027864';
+          btn.title = 'Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalLabel;
+            btn.style.color = originalColor;
+            btn.title = (navigator.maxTouchPoints > 0) ? 'Share' : 'Copy URL';
+          }, 1000);
         }
       } catch (e) {
         console.error('Copy URL failed:', e);
