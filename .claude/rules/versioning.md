@@ -13,7 +13,7 @@ After any non-documentation change, check if the version needs to be bumped:
 If `index.html` already has a higher version than the latest tag, do **not** bump again.
 
 ```html
-<div class="subtitle">Scrum Poker · v1.0.0</div>
+<div class="subtitle">Japanese Reader For Learners · v1.22.4</div>
 ```
 
 ## How to set the version
@@ -31,11 +31,16 @@ The result is always `tag_version + one bump`. Never accumulate multiple bumps
 
 ## Cache busting
 
+**Important:** Cache bust versions are only the minor version number (e.g., `v=22`
+for v1.22.x). Dictionary updates must always be at least a minor version bump—never
+patch. When bumping the minor version, also update the cache bust parameter.
+
 When bumping the version in `index.html`, also update the cache bust parameter in
-the dictionary URL to match:
+the dictionary URLs to match the minor version:
 
 ```javascript
-const res = await fetch('jmdict-compact.json.gz?v=13');  // Match version number
+ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=22' },
+full: { path: 'dict/jmdict-full.json.gz?v=22' },
 ```
 
 This ensures users get the new dictionary data instead of a cached copy.

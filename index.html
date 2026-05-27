@@ -1195,7 +1195,7 @@
     <header>
       <div class="header-left">
         <div class="logo">語 <span>Reader</span></div>
-        <div class="subtitle">Japanese Reader For Learners · v1.22.3</div>
+        <div class="subtitle" id="subtitle">Japanese Reader For Learners · v1.22.4</div>
       </div>
       <div class="header-actions">
         <button type="button" id="helpBtn" class="toolbar-btn" title="Help" aria-label="Help"></button>
@@ -1348,6 +1348,16 @@
 
   <script src="kuromoji.js"></script>
   <script>
+    // ── Unstable/dev detection ─────────────────────────────────────────────────────
+    const subtitle = document.getElementById('subtitle');
+    if (subtitle) {
+      if (location.hostname === 'localhost' || /^[\d.]+$/.test(location.hostname)) {
+        subtitle.textContent += ' (dev)';
+      } else if (location.pathname.includes('unstable')) {
+        subtitle.textContent += ' (unstable)';
+      }
+    }
+
     // ── Katakana → Hiragana ──────────────────────────────────────────────────────
     function toHiragana(str) {
       return (str || '').replace(/[ァ-ヺ]/g, c =>
