@@ -42,6 +42,10 @@ build-dict:
     {{ UV_CACHE }}; uv run scripts/download_jmdict_source.py
     {{ UV_CACHE }}; uv run scripts/compact_jmdict.py
 
-# Tag the release and push.
+# Push to unstable (origin).
+push_unstable:
+    git push origin HEAD:main --force
+
+# Tag the release and push to prod.
 tag_and_push: lint
     scripts/tag_and_push.sh

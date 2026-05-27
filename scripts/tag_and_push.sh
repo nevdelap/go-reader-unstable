@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tag the release and push to origin.
+# Tag the release and push to prod.
 # Usage: scripts/tag_and_push.sh
 
 set -euo pipefail
@@ -42,10 +42,10 @@ fi
 # Create tag and push
 echo "Creating tag $VERSION..."
 git tag -a "$VERSION" -m "Release $VERSION"
-echo "Pushing HEAD:main (triggers Pages build)..."
-git push origin HEAD:main --force
+echo "Pushing HEAD:main to prod (triggers Pages build)..."
+git push prod HEAD:main --force
 echo "Waiting for GitHub Pages to register the commit..."
 sleep 5
-echo "Pushing tags..."
-git push origin --tags --no-verify
+echo "Pushing tags to prod..."
+git push prod --tags --no-verify
 echo "Done! Released $VERSION"
