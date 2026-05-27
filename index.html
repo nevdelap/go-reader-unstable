@@ -856,6 +856,43 @@
       font-size: 16px;
       color: var(--text-dim);
       line-height: 1.4;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    @media (max-width: 600px) {
+      .panel-english {
+        scrollbar-width: none;
+      }
+
+      .panel-english::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    @media (min-width: 601px) {
+      .panel-english {
+        scrollbar-width: auto;
+        scrollbar-color: var(--scrollbar-thumb) var(--bg-surface);
+      }
+
+      .panel-english::-webkit-scrollbar {
+        width: 14px;
+      }
+
+      .panel-english::-webkit-scrollbar-track {
+        background: var(--bg-surface);
+        border-radius: 3px;
+      }
+
+      .panel-english::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 3px;
+      }
+
+      .panel-english::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+      }
     }
 
     .panel-close {
@@ -923,11 +960,41 @@
       overflow-y: hidden;
       white-space: nowrap;
       max-width: 80vw;
-      scrollbar-width: none;
     }
 
-    .panel-word-overlay-content::-webkit-scrollbar {
-      display: none;
+    @media (max-width: 600px) {
+      .panel-word-overlay-content {
+        scrollbar-width: none;
+      }
+
+      .panel-word-overlay-content::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    @media (min-width: 601px) {
+      .panel-word-overlay-content {
+        scrollbar-width: auto;
+        scrollbar-color: var(--scrollbar-thumb) var(--bg-surface);
+      }
+
+      .panel-word-overlay-content::-webkit-scrollbar {
+        height: 14px;
+      }
+
+      .panel-word-overlay-content::-webkit-scrollbar-track {
+        background: var(--bg-surface);
+        border-radius: 3px;
+      }
+
+      .panel-word-overlay-content::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 3px;
+      }
+
+      .panel-word-overlay-content::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+      }
     }
 
     .panel-word-overlay .panel-surface {
