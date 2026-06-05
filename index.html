@@ -65,7 +65,7 @@
   <!-- Set theme before first paint to avoid flash -->
   <script>!function () { var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; document.getElementById('themeColor').content = t === 'dark' ? '#000000' : '#f5f5f5' }()</script>
   <!-- Prefetch selected dictionary before first paint -->
-  <script>!function () { var m = localStorage.getItem('dictionaryMode'); if (m !== 'ultra' && m !== 'full') m = 'full'; var l = document.createElement('link'); l.rel = 'prefetch'; l.href = 'dict/jmdict-' + (m === 'ultra' ? 'ultra-compact' : 'full') + '.json.gz?v=22'; document.head.appendChild(l); }()</script>
+  <script>!function () { var m = localStorage.getItem('dictionaryMode'); if (m !== 'ultra' && m !== 'full') m = 'full'; var l = document.createElement('link'); l.rel = 'prefetch'; l.href = 'dict/jmdict-' + (m === 'ultra' ? 'ultra-compact' : 'full') + '.json.gz?v=23'; document.head.appendChild(l); }()</script>
   <style>
     @font-face {
       font-family: 'Inter';
@@ -1195,7 +1195,7 @@
     <header>
       <div class="header-left">
         <div class="logo">語 <span>Reader</span></div>
-        <div class="subtitle" id="subtitle">Japanese Reader For Learners · v1.22.4</div>
+        <div class="subtitle" id="subtitle">Japanese Reader For Learners · v1.23.0</div>
       </div>
       <div class="header-actions">
         <button type="button" id="helpBtn" class="toolbar-btn" title="Help" aria-label="Help"></button>
@@ -1351,6 +1351,7 @@
   </div>
 
   <script src="kuromoji.js"></script>
+  <script src="japanese-ranges.js"></script>
   <script>
     // ── Unstable/dev detection ─────────────────────────────────────────────────────
     const subtitle = document.getElementById('subtitle');
@@ -1436,18 +1437,8 @@
     }
 
     // ── Strip non-Japanese ───────────────────────────────────────────────────────
-    const STRIP_NON_JAPANESE = new RegExp(`[^${[
-      '\\u3000-\\u303F', // CJK symbols and punctuation (includes ideographic space)
-      '\\u3040-\\u309F', // hiragana
-      '\\u30A0-\\u30FF', // katakana
-      '\\u4E00-\\u9FFF', // CJK unified ideographs (kanji)
-      '\\u3400-\\u4DBF', // CJK extension A
-      '\\uFF00-\\uFFEF', // fullwidth and halfwidth forms
-      '\\n',             // newlines (preserve line breaks feature)
-    ].join('')}]`, 'g');
-
     function stripNonJapanese(text) {
-      return text.replace(STRIP_NON_JAPANESE, '').trim();
+      return text.replace(new RegExp(`[^${JAPANESE_RANGES}]`, 'g'), '').trim();
     }
 
     // ── JMdict lookup ────────────────────────────────────────────────────────────
@@ -1572,8 +1563,8 @@
 
     const DICTIONARY_MODE_KEY = 'dictionaryMode';
     const DICTIONARY_MODES = {
-      ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=22' },
-      full: { path: 'dict/jmdict-full.json.gz?v=22' },
+      ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=23' },
+      full: { path: 'dict/jmdict-full.json.gz?v=23' },
     };
 
     function savedDictionaryMode() {
@@ -1983,7 +1974,7 @@
         return false;
       }
 
-      const tokenEl = $('tokenArea').querySelectorAll('.token')[saved.index];
+      const tokenEl = $('tokenArea').querySelector(`.token[data-token-index="${saved.index}"]`);
       if (!tokenEl) {
         clearSavedSelectedMorpheme();
         return false;
@@ -2017,6 +2008,7 @@
         span.setAttribute('tabindex', '0');
         span.setAttribute('lang', 'ja');
         span.setAttribute('aria-label', `${token.surface_form}, ${getPOS(token)}`);
+        span.dataset.tokenIndex = i;
 
         const activate = () => {
           if (selectedIndex === i) {
