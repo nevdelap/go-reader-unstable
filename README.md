@@ -42,7 +42,7 @@ counts, and is skipped when browser Do Not Track is enabled.
 - **Dictionary lookups** — [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html),
   the Electronic Dictionary Research and Development Group's Japanese-English
   dictionary, bundled in ultra-compact (~1.7 MB) and full (~7.7 MB) English
-  lookup files with cache-busting URLs (`?v=21` parameter)
+  lookup files with cache-busting URLs (`?v=23` parameter)
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 
@@ -60,16 +60,33 @@ See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 - Fonts: Inter ([SIL Open Font License 1.1](LICENSE-INTER)) and Noto Sans JP
   ([SIL Open Font License 1.1](LICENSE-NOTO-SANS-JP))
 
+## Two repositories
+
+This project uses two GitHub repositories for deployment:
+
+- **[go-reader](https://github.com/nevdelap/go-reader)** — production, served at
+  <https://nevdelap.github.io/go-reader/>. Only receives tagged releases.
+- **[go-reader-unstable](https://github.com/nevdelap/go-reader-unstable)** —
+  unstable/preview, served at <https://nevdelap.github.io/go-reader-unstable/>.
+  Receives every push for testing before a production release.
+
+GitHub Pages serves one site per repository, so hosting both versions on
+GitHub Pages requires two repositories — otherwise they would be in a single
+repo. As a result, branches are not used; the main branch of go-reader-unstable
+just receives all dev changes. Issues should be posted to the
+[go-reader](https://github.com/nevdelap/go-reader) repository.
+
 ## Local development
 
 ```bash
-just install-hooks # install git hooks
-just serve         # serve locally and open in browser
-just format        # format Markdown
-just lint          # format then lint
-just test          # run tests
-just build-dict    # refresh source if needed and rebuild JMdict lookup files
-just tag_and_push  # tag the release and push
+just install-hooks  # install git hooks
+just serve          # serve locally and open in browser
+just format         # format Markdown
+just lint           # format then lint
+just test           # run tests
+just build-dict     # refresh source if needed and rebuild JMdict lookup files
+just push_unstable  # push to unstable (go-reader-unstable) for preview
+just tag_and_push   # lint, tag the release, and push to prod (go-reader)
 ```
 
 ## Maintaining the repository
