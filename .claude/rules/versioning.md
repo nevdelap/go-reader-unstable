@@ -39,3 +39,12 @@ const res = await fetch('jmdict-compact.json.gz?v=13');  // Match version number
 ```
 
 This ensures users get the new dictionary data instead of a cached copy.
+
+## Issue template
+
+When bumping the version in `index.html`, also update the `placeholder` in
+`.github/ISSUE_TEMPLATE/bug_report.yml` to match the new version:
+
+```yaml
+placeholder: v1.23.0
+```

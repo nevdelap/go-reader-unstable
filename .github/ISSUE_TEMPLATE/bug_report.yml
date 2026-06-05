@@ -1,0 +1,75 @@
+name: Bug report
+description: Report a bug to help improve 語 Reader.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thank you for taking the time to file a bug report. Please fill
+        in as much detail as you can - it makes the fix faster.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: >
+        What went wrong? Include what you expected to happen
+        and what actually happened.
+      placeholder: When I do X, Y happens instead of Z.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps that reliably trigger the bug.
+      placeholder: |
+        1. Open 語 Reader.
+        2. Paste text `…`.
+        3. Click a morpheme.
+        4. Click read top to bottom.
+        5. Observe error.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 語 Reader version
+      description: >
+        Shown in the subtitle at the top of the page. e.g. v1.23.0.
+        Please make sure to hard-refresh to get the latest version before reporting.
+      placeholder: v1.23.0
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      description: e.g. Chrome 125 on macOS 15.2, Firefox 126 on Ubuntu 24.04.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors
+      description: >
+        Paste any errors from the browser developer console (F12 → Console).
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: >
+        Sample text that triggers the bug, dictionary mode in use, anything
+        else that may be relevant. More detail > less detail.
+    validations:
+      required: false
