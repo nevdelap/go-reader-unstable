@@ -20,9 +20,18 @@ function toHiragana(str) {
   );
 }
 
+const STRIP_NON_JAPANESE = new RegExp(`[^${[
+  '\\u3000-\\u303F', // CJK symbols and punctuation (includes ideographic space)
+  '\\u3040-\\u309F', // hiragana
+  '\\u30A0-\\u30FF', // katakana
+  '\\u4E00-\\u9FFF', // CJK unified ideographs (kanji)
+  '\\u3400-\\u4DBF', // CJK extension A
+  '\\uFF00-\\uFFEF', // fullwidth and halfwidth forms
+  '\\n',             // newlines (preserve line breaks feature)
+].join('')}]`, 'g');
+
 function stripNonJapanese(text) {
-  return text
-    .replace(/[^　-〿぀-ゟ゠-ヿ一-鿿㐀-䶿＀-￯―—\n]/g, '').trim();
+  return text.replace(STRIP_NON_JAPANESE, '').trim();
 }
 
 async function textToHash(text) {

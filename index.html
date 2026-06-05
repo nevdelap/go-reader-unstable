@@ -1236,7 +1236,8 @@
               aria-label="Japanese text input"></textarea>
             <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
               <button type="button" id="clearBtn" class="toolbar-btn" title="Ctrl+K">Clear</button>
-              <button type="button" id="clearUpBtn" class="toolbar-btn" title="Clear from cursor to top">Clear Up</button>
+              <button type="button" id="clearUpBtn" class="toolbar-btn" title="Clear from cursor to top">Clear
+                Up</button>
               <button type="button" id="pasteBtn" class="toolbar-btn" title="Ctrl+V">Paste</button>
               <button type="button" id="copyUrlBtn" class="toolbar-btn"
                 title="Share or copy link to this text"></button>
@@ -1255,6 +1256,8 @@
             <button type="button" id="verticalBtn" class="toolbar-btn" aria-pressed="false" title="Alt+D"
               style="margin-left:auto;">Read top to bottom</button>
             <button type="button" id="dimGrammarBtn" class="toolbar-btn" aria-pressed="false"></button>
+            <button type="button" id="preserveLineBreaksBtn" class="toolbar-btn" aria-pressed="false">Preserve line
+              breaks</button>
           </div>
         </div>
       </div>
@@ -1272,9 +1275,10 @@
 
     <footer>
       <div class="feedback">Found a bug or have a suggestion? <a href="https://github.com/nevdelap/go-reader/issues"
-          target="_blank" rel="noopener noreferrer">Open an issue to let me know.</a> New features and fixes land in the <a
-          href="https://nevdelap.github.io/go-reader-unstable/" target="_blank" rel="noopener noreferrer">unstable
-          release</a> before the stable release.</div>
+          target="_blank" rel="noopener noreferrer">Open an issue to let me know.</a> New features and fixes land in the
+        <a href="https://nevdelap.github.io/go-reader-unstable/" target="_blank" rel="noopener noreferrer">unstable
+          release</a> before the stable release.
+      </div>
       This site uses the <a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project" target="_blank"
         rel="noopener noreferrer">JMdict/EDICT</a> dictionary files. These files are the property of the <a
         href="https://www.edrdg.org/" target="_blank" rel="noopener noreferrer">Electronic Dictionary Research and
@@ -1432,9 +1436,18 @@
     }
 
     // ── Strip non-Japanese ───────────────────────────────────────────────────────
+    const STRIP_NON_JAPANESE = new RegExp(`[^${[
+      '\\u3000-\\u303F', // CJK symbols and punctuation (includes ideographic space)
+      '\\u3040-\\u309F', // hiragana
+      '\\u30A0-\\u30FF', // katakana
+      '\\u4E00-\\u9FFF', // CJK unified ideographs (kanji)
+      '\\u3400-\\u4DBF', // CJK extension A
+      '\\uFF00-\\uFFEF', // fullwidth and halfwidth forms
+      '\\n',             // newlines (preserve line breaks feature)
+    ].join('')}]`, 'g');
+
     function stripNonJapanese(text) {
-      return text
-        .replace(/[^　-〿぀-ゟ゠-ヿ一-鿿㐀-䶿＀-￯―—\n]/g, '').trim();
+      return text.replace(STRIP_NON_JAPANESE, '').trim();
     }
 
     // ── JMdict lookup ────────────────────────────────────────────────────────────
@@ -1992,6 +2005,11 @@
       area.parentNode.replaceChild(fresh, area);
 
       tokens.forEach((token, i) => {
+        if (token.pos === 'LINEBREAK') {
+          fresh.appendChild(document.createElement('br'));
+          return;
+        }
+
         const span = document.createElement('span');
         span.className = 'token' + (isGrammar(token) ? ' grammar' : '');
         span.textContent = token.surface_form;
@@ -2018,8 +2036,9 @@
         fresh.appendChild(span);
       });
 
-      const content = tokens.filter(t => !isGrammar(t)).length;
-      $('tokenCount').innerHTML = `${tokens.length} total morphemes · <span class="token-count-content">${content} content morphemes</span>`;
+      const realTokens = tokens.filter(t => t.pos !== 'LINEBREAK');
+      const content = realTokens.filter(t => !isGrammar(t)).length;
+      $('tokenCount').innerHTML = `${realTokens.length} total morphemes · <span class="token-count-content">${content} content morphemes</span>`;
       fresh.addEventListener('click', () => closePanel());
     }
 
@@ -2050,7 +2069,17 @@
       hide($('emptyState'));
 
       try {
-        tokens = tokenizer.tokenize(text).filter(t => t.surface_form.trim() !== '');
+        if (isPreserveLineBreaks) {
+          const normalized = text.replace(/\n{2,}/g, '\n');
+          const segments = normalized.split('\n').filter(s => s.length > 0);
+          tokens = [];
+          segments.forEach((seg, i) => {
+            if (i > 0) tokens.push({ surface_form: '\n', pos: 'LINEBREAK' });
+            tokens.push(...tokenizer.tokenize(seg).filter(t => t.surface_form.trim() !== ''));
+          });
+        } else {
+          tokens = tokenizer.tokenize(text).filter(t => t.surface_form.trim() !== '');
+        }
         lastRawInput = raw;
         closePanel(true);
         renderTokens();
@@ -2227,6 +2256,21 @@
       isDimGrammar = !isDimGrammar;
       applyDimGrammar(isDimGrammar);
       localStorage.setItem('dimGrammar', isDimGrammar ? 'true' : 'false');
+    });
+
+    function applyPreserveLineBreaks(preserve) {
+      $('preserveLineBreaksBtn').textContent = preserve ? 'Ignore line breaks' : 'Preserve line breaks';
+      $('preserveLineBreaksBtn').setAttribute('aria-pressed', preserve ? 'true' : 'false');
+    }
+
+    let isPreserveLineBreaks = localStorage.getItem('preserveLineBreaks') === 'true';
+    applyPreserveLineBreaks(isPreserveLineBreaks);
+    $('preserveLineBreaksBtn').addEventListener('click', () => {
+      isPreserveLineBreaks = !isPreserveLineBreaks;
+      applyPreserveLineBreaks(isPreserveLineBreaks);
+      localStorage.setItem('preserveLineBreaks', isPreserveLineBreaks ? 'true' : 'false');
+      lastRawInput = null;
+      analyze();
     });
 
     document.addEventListener('keydown', e => {
