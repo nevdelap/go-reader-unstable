@@ -19,7 +19,7 @@ ROOT = Path(__file__).parent.parent
 
 
 def load_dict(name):
-    with gzip.open(ROOT / 'dict' / name) as f:
+    with gzip.open(ROOT / 'build' / name) as f:
         return json.load(f)
 
 

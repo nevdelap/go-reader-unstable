@@ -20,7 +20,7 @@ function toHiragana(str) {
   );
 }
 
-const { JAPANESE_RANGES } = require('./japanese-ranges.js');
+const { JAPANESE_RANGES } = require('./javascript/japanese-ranges.js');
 
 function stripNonJapanese(text) {
   return text.replace(new RegExp(`[^${JAPANESE_RANGES}]`, 'g'), '').trim();
@@ -79,22 +79,17 @@ function jmdictPOS(tags) {
 }
 
 const IMPERATIVE_E_TO_U = {え:'う',け:'く',げ:'ぐ',せ:'す',て:'つ',ね:'ぬ',べ:'ぶ',め:'む',れ:'る'};
-const DICTIONARY_MODES = {
-  ultra: { path: 'dict/jmdict-ultra-compact.json.gz?v=23' },
-  full: { path: 'dict/jmdict-full.json.gz?v=23' },
+const DICTIONARY_MODES = ['ultra', 'full'];
+const DICT_PATHS = {
+  ultra: 'build/jmdict-ultra-compact.json.gz',
+  full: 'build/jmdict-full.json.gz',
 };
-const ULTRA_DICT_URL = DICTIONARY_MODES.ultra.path;
-const FULL_DICT_URL = DICTIONARY_MODES.full.path;
 
 function savedDictionaryMode(storage) {
   const mode = storage.getItem('dictionaryMode');
-  if (objectHasOwn(DICTIONARY_MODES, mode)) return mode;
+  if (DICTIONARY_MODES.includes(mode)) return mode;
   storage.removeItem('dictionaryMode');
   return 'full';
-}
-
-function jmdictUrlForMode(mode) {
-  return DICTIONARY_MODES[objectHasOwn(DICTIONARY_MODES, mode) ? mode : 'full'].path;
 }
 
 function resolvedForm(token) {
@@ -144,7 +139,7 @@ function readDict(file) {
   return JSON.parse(gunzipSync(readFileSync(join(__dirname, file))).toString('utf8'));
 }
 
-jmdict = readDict('dict/jmdict-full.json.gz');
+jmdict = readDict('build/jmdict-full.json.gz');
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -153,14 +148,6 @@ test('returns null when jmdict not loaded', () => {
   jmdict = null;
   assert.equal(lookupWord('払う', null), null);
   jmdict = saved;
-});
-
-test('dictionary URL selection defaults to full', () => {
-  assert.equal(jmdictUrlForMode('ultra'), ULTRA_DICT_URL);
-  assert.equal(jmdictUrlForMode('full'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode('compact'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode('nope'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(null), FULL_DICT_URL);
 });
 
 test('saved dictionary mode removes invalid values', () => {
@@ -221,79 +208,15 @@ test('saved dictionary mode — multiple invalid values are cleaned', () => {
   }
 });
 
-test('dictionary mode persistence — saved ultra mode loads correct URL', () => {
-  const storage = {
-    getItem: () => 'ultra',
-    removeItem: () => {},
-  };
-
-  const savedMode = savedDictionaryMode(storage);
-  assert.equal(savedMode, 'ultra');
-  assert.equal(jmdictUrlForMode(savedMode), ULTRA_DICT_URL);
-});
-
-test('dictionary mode persistence — saved full mode loads correct URL', () => {
-  const storage = {
-    getItem: () => 'full',
-    removeItem: () => {},
-  };
-
-  const savedMode = savedDictionaryMode(storage);
-  assert.equal(savedMode, 'full');
-  assert.equal(jmdictUrlForMode(savedMode), FULL_DICT_URL);
-});
-
-test('dictionary mode persistence — invalid mode falls back to full URL', () => {
-  const storage = {
-    getItem: () => 'invalid',
-    removeItem: () => {},
-  };
-
-  const savedMode = savedDictionaryMode(storage);
-  assert.equal(savedMode, 'full');
-  assert.equal(jmdictUrlForMode(savedMode), FULL_DICT_URL);
-});
-
 test('dictionary artifacts are valid and ordered by size/detail', () => {
-  const ultra = readDict('dict/jmdict-ultra-compact.json.gz');
-  const full = readDict('dict/jmdict-full.json.gz');
+  const ultra = readDict('build/jmdict-ultra-compact.json.gz');
+  const full = readDict('build/jmdict-full.json.gz');
 
   assert.ok(Object.keys(ultra).length < Object.keys(full).length);
   assert.ok(ultra['行く']);
   assert.ok(full['行く'].g.length >= ultra['行く'].g.length);
 });
 
-// Dictionary mode error handling tests
-test('dictionary mode — Object.hasOwn polyfill works correctly', () => {
-  const objectHasOwn = Object.hasOwn || ((obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop));
-  const testObj = { ultra: 'value1', full: 'value2' };
-
-  assert.equal(objectHasOwn(testObj, 'ultra'), true);
-  assert.equal(objectHasOwn(testObj, 'full'), true);
-  assert.equal(objectHasOwn(testObj, 'compact'), false);
-  assert.equal(objectHasOwn(testObj, 'invalid'), false);
-  assert.equal(objectHasOwn(testObj, null), false);
-  assert.equal(objectHasOwn(testObj, undefined), false);
-});
-
-test('dictionary mode — DICTIONARY_MODES object is correctly structured', () => {
-  assert.ok(DICTIONARY_MODES.ultra);
-  assert.ok(DICTIONARY_MODES.full);
-  assert.ok(DICTIONARY_MODES.ultra.path.includes('jmdict-ultra-compact'));
-  assert.ok(DICTIONARY_MODES.full.path.includes('jmdict-full'));
-  assert.ok(DICTIONARY_MODES.ultra.path.includes('?v='));
-  assert.ok(DICTIONARY_MODES.full.path.includes('?v='));
-});
-
-test('dictionary mode — jmdictUrlForMode handles all edge cases', () => {
-  assert.equal(jmdictUrlForMode('ultra'), ULTRA_DICT_URL);
-  assert.equal(jmdictUrlForMode('full'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode('compact'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode('invalid'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(null), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(undefined), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(''), FULL_DICT_URL);
-});
 
 // Note: Full UI tests for settings popover interactions (click-outside-to-close, Escape key,
 // focus trap, radio button changes, reload button) would require a browser environment with
@@ -534,37 +457,7 @@ test('textToHash / hashToText round-trip', async (t) => {
 
 // ── Dictionary modes ────────────────────────────────────────────────────────────
 
-test('DICTIONARY_MODES constant has expected structure', () => {
-  assert.ok(objectHasOwn(DICTIONARY_MODES, 'ultra'));
-  assert.ok(objectHasOwn(DICTIONARY_MODES, 'full'));
-  assert.equal(typeof DICTIONARY_MODES.ultra.path, 'string');
-  assert.equal(typeof DICTIONARY_MODES.full.path, 'string');
-  assert.ok(DICTIONARY_MODES.ultra.path.includes('jmdict-ultra-compact.json.gz'));
-  assert.ok(DICTIONARY_MODES.full.path.includes('jmdict-full.json.gz'));
-  assert.ok(DICTIONARY_MODES.ultra.path.includes('?v='));
-  assert.ok(DICTIONARY_MODES.full.path.includes('?v='));
-});
-
-test('jmdictUrlForMode returns ultra path for ultra mode', () => {
-  assert.equal(jmdictUrlForMode('ultra'), ULTRA_DICT_URL);
-});
-
-test('jmdictUrlForMode returns full path for full mode', () => {
-  assert.equal(jmdictUrlForMode('full'), FULL_DICT_URL);
-});
-
-test('jmdictUrlForMode falls back to full for invalid mode', () => {
-  assert.equal(jmdictUrlForMode('invalid'), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(''), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(null), FULL_DICT_URL);
-  assert.equal(jmdictUrlForMode(undefined), FULL_DICT_URL);
-});
-
-test('jmdictUrlForMode falls back to full for deprecated compact mode', () => {
-  assert.equal(jmdictUrlForMode('compact'), FULL_DICT_URL);
-});
-
-test('dictionary mode URL constants include cache bust parameter', () => {
-  assert.ok(DICTIONARY_MODES.ultra.path.includes('?v='), 'ultra URL should include cache bust');
-  assert.ok(DICTIONARY_MODES.full.path.includes('?v='), 'full URL should include cache bust');
+test('DICTIONARY_MODES contains ultra and full', () => {
+  assert.ok(DICTIONARY_MODES.includes('ultra'));
+  assert.ok(DICTIONARY_MODES.includes('full'));
 });

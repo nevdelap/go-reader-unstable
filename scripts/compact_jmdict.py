@@ -177,9 +177,9 @@ def write_dict(out: dict[str, dict[str, Any]], output: Path) -> None:
 
 
 # Find and load source file
-matches = sorted(glob.glob('jmdict-eng-*.json.zip'))
+matches = sorted(glob.glob('build/jmdict-eng-*.json.zip'))
 if not matches:
-    raise FileNotFoundError("No jmdict-eng-*.json.zip found in current directory.")
+    raise FileNotFoundError("No build/jmdict-eng-*.json.zip found. Run just build-dict first.")
 source = matches[-1]
 print(f"Loading {source}...")
 with zipfile.ZipFile(source) as zf:
@@ -190,6 +190,6 @@ if not d.get('words'):
 print(f"Loaded {len(d['words'])} entries from {source}")
 
 # Build and write both dictionary modes
-write_dict(build_dict(d, common_only=True), Path('dict') / 'jmdict-ultra-compact.json.gz')
-write_dict(build_dict(d), Path('dict') / 'jmdict-full.json.gz')
+write_dict(build_dict(d, common_only=True), Path('build') / 'jmdict-ultra-compact.json.gz')
+write_dict(build_dict(d), Path('build') / 'jmdict-full.json.gz')
 print('Done')

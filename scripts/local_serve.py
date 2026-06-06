@@ -16,14 +16,14 @@ os.chdir(DIR)
 
 class GzipAwareHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        # Serve .json.gz files with Content-Encoding: gzip so the browser
-        # decompresses them automatically, matching GitHub Pages behaviour
         path = self.path.split('?')[0]
+        # Serve .json.gz with Content-Encoding: gzip so the browser decompresses
+        # automatically, matching GitHub Pages behaviour.
         if path.endswith('.json.gz'):
             self.send_header('Content-Encoding', 'gzip')
             self.send_header('Content-Type', 'application/json')
-        # Cache large static assets aggressively so reloads are instant over LAN
-        if any(path.endswith(ext) for ext in ('.json.gz', '.js', '.dat.gz', '.woff2')):
+        # Cache large static assets aggressively so reloads are instant over LAN.
+        if any(path.endswith(ext) for ext in ('.json.gz', '.js', '.woff2', '.wasm', '.wasm.gz')):
             self.send_header('Cache-Control', 'max-age=86400')
         super().end_headers()
 

@@ -21,7 +21,9 @@ def is_fresh(path: Path) -> bool:
     return mtime.date() == today
 
 
-current = sorted(ROOT.glob('jmdict-eng-*.json.zip'))
+BUILD = ROOT / 'build'
+BUILD.mkdir(exist_ok=True)
+current = sorted(BUILD.glob('jmdict-eng-*.json.zip'))
 if current and is_fresh(current[-1]):
     print(f'JMdict source is fresh (downloaded today): {current[-1].name}')
     raise SystemExit(0)
@@ -40,7 +42,7 @@ asset = next(
 if not asset:
     raise RuntimeError('Latest release has no jmdict-eng-*.json.zip asset.')
 
-target = ROOT / asset['name']
+target = BUILD / asset['name']
 if target.exists() and is_fresh(target):
     print(f'JMdict source is fresh (downloaded today): {target.name}')
     raise SystemExit(0)

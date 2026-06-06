@@ -52,7 +52,7 @@ git diff origin/main HEAD
 
 # ── Rewrite history and rebuild ───────────────────────────────────────────────
 git filter-repo --invert-paths \
-  --path-glob 'dict/jmdict-*.json.gz' \
+  --path-glob 'build/jmdict-*.json.gz' \
   --force
 git remote add origin git@github.com:nevdelap/go-reader.git 2>/dev/null ||
   git remote set-url origin git@github.com:nevdelap/go-reader.git
@@ -62,7 +62,7 @@ if ! scripts/compact_jmdict.py; then
   exit 1
 fi
 
-git add dict/jmdict-*.json.gz
+git add -f build/jmdict-*.json.gz
 git commit -m "Restore current dictionary after history rewrite."
 git gc --prune=now
 read -rp "Push force to origin/main? (y/N) " confirm

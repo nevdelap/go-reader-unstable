@@ -42,7 +42,7 @@ body:
       description: >
         Shown in the subtitle at the top of the page. e.g. v1.23.0.
         Please make sure to hard-refresh to get the latest version before reporting.
-      placeholder: v1.23.0
+      placeholder: v1.24.0
     validations:
       required: true
 

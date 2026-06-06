@@ -1,4 +1,5 @@
-jmdict-compact.json
-jmdict-eng-*.json
-jmdict-eng-*.json.zip
 docs/todo.md
+/kuromoji-wasm/target/
+/kuromoji-wasm/lindera-cache/
+/kuromoji-wasm/build-dict/target/
+/jmdict-wasm/target/
