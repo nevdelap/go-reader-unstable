@@ -1769,7 +1769,7 @@
           : new Promise((resolve, reject) => {
             kuromoji.builder({ dicPath: 'dict/' }).build((err, t) => {
               if (err) { console.error('kuromoji error:', err); reject(err); }
-              else resolve(t);
+              else { console.log(`[timing] tokenizer ready: ${performance.now().toFixed(0)} ms`); resolve(t); }
             });
           });
 
@@ -2077,6 +2077,10 @@
         renderTokens();
         show($('tokenView'));
         show($('legend'));
+        if (!analyze._logged) {
+          analyze._logged = true;
+          requestAnimationFrame(() => console.log(`[timing] first morphemes: ${performance.now().toFixed(0)} ms`));
+        }
         const restored = restoreSelectedMorpheme();
         if (isVertical && !restored) {
           requestAnimationFrame(() => { $('tokenArea').scrollLeft = $('tokenArea').scrollWidth; });
