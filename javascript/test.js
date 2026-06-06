@@ -20,7 +20,7 @@ function toHiragana(str) {
   );
 }
 
-const { JAPANESE_RANGES } = require('./javascript/japanese-ranges.js');
+const { JAPANESE_RANGES } = require('./japanese-ranges.js');
 
 function stripNonJapanese(text) {
   return text.replace(new RegExp(`[^${JAPANESE_RANGES}]`, 'g'), '').trim();
@@ -135,8 +135,10 @@ function lookupWord(surface, basicForm) {
 
 // ── Load dict ────────────────────────────────────────────────────────────────
 
+const ROOT = join(__dirname, '..');
+
 function readDict(file) {
-  return JSON.parse(gunzipSync(readFileSync(join(__dirname, file))).toString('utf8'));
+  return JSON.parse(gunzipSync(readFileSync(join(ROOT, file))).toString('utf8'));
 }
 
 jmdict = readDict('build/jmdict-full.json.gz');
@@ -460,4 +462,73 @@ test('textToHash / hashToText round-trip', async (t) => {
 test('DICTIONARY_MODES contains ultra and full', () => {
   assert.ok(DICTIONARY_MODES.includes('ultra'));
   assert.ok(DICTIONARY_MODES.includes('full'));
+});
+
+// ── jmdictPOS ───────────────────────────────────────────────────────────────
+
+test('jmdictPOS — verb tags start with v', () => {
+  assert.deepEqual(jmdictPOS(['v5u']), ['verb']);
+  assert.deepEqual(jmdictPOS(['v1']), ['verb']);
+});
+
+test('jmdictPOS — adjective tags start with adj', () => {
+  assert.deepEqual(jmdictPOS(['adj-i']), ['adjective']);
+  assert.deepEqual(jmdictPOS(['adj-na']), ['adjective']);
+});
+
+test('jmdictPOS — known tags are mapped', () => {
+  assert.deepEqual(jmdictPOS(['n']), ['noun']);
+  assert.deepEqual(jmdictPOS(['adv']), ['adverb']);
+  assert.deepEqual(jmdictPOS(['prt']), ['particle']);
+  assert.deepEqual(jmdictPOS(['aux-v']), ['auxiliary verb']);
+});
+
+test('jmdictPOS — unknown tags are omitted', () => {
+  assert.deepEqual(jmdictPOS(['unk-tag']), []);
+});
+
+test('jmdictPOS — duplicates are deduplicated', () => {
+  assert.deepEqual(jmdictPOS(['v5u', 'v1']), ['verb']);
+});
+
+test('jmdictPOS — mixed tags deduplicate verb/adjective', () => {
+  assert.deepEqual(jmdictPOS(['n', 'v5u']), ['noun', 'verb']);
+});
+
+test('jmdictPOS — empty input returns empty array', () => {
+  assert.deepEqual(jmdictPOS([]), []);
+  assert.deepEqual(jmdictPOS(null), []);
+  assert.deepEqual(jmdictPOS(undefined), []);
+});
+
+// ── resolvedForm ─────────────────────────────────────────────────────────────
+
+test('resolvedForm — returns basic_form when present and different from surface', () => {
+  assert.equal(resolvedForm({ surface_form: '食べた', basic_form: '食べる' }), '食べる');
+});
+
+test('resolvedForm — falls back to surface_form when basic_form is *', () => {
+  assert.equal(resolvedForm({ surface_form: 'は', basic_form: '*' }), 'は');
+});
+
+test('resolvedForm — falls back to surface_form when basic_form is empty', () => {
+  assert.equal(resolvedForm({ surface_form: 'は', basic_form: '' }), 'は');
+});
+
+test('resolvedForm — uses surface_form when basic_form equals surface_form', () => {
+  assert.equal(resolvedForm({ surface_form: '食べる', basic_form: '食べる' }), '食べる');
+});
+
+// ── lookupWord pos field ──────────────────────────────────────────────────────
+
+test('lookupWord — pos field is correct for noun', () => {
+  const r = lookupWord('本', '本');
+  assert.ok(r);
+  assert.ok(r.pos && r.pos.includes('noun'), `pos '${r.pos}' should include 'noun'`);
+});
+
+test('lookupWord — pos field is correct for adjective', () => {
+  const r = lookupWord('大きい', '大きい');
+  assert.ok(r);
+  assert.ok(r.pos && r.pos.includes('adjective'), `pos '${r.pos}' should include 'adjective'`);
 });

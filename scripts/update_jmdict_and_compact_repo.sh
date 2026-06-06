@@ -19,7 +19,8 @@ force=false
 [[ "${1:-}" == "--force" || "${1:-}" == "-f" ]] && force=true
 
 # ── Check for newer JMdict release ───────────────────────────────────────────
-current=$(find . -maxdepth 1 -name 'jmdict-eng-*.json.zip' | sort -V | tail -1 | grep -oP '\d+\.\d+\.\d+' || true)
+mkdir -p build
+current=$(find ./build -maxdepth 1 -name 'jmdict-eng-*.json.zip' | sort -V | tail -1 | grep -oP '\d+\.\d+\.\d+' || true)
 [[ -z "$current" ]] && current="0.0.0"
 echo "Current JMdict version: ${current}"
 
@@ -33,16 +34,16 @@ elif [[ "$current" != "0.0.0" &&
   echo "Already up to date (${current}). Nothing to do."
   exit 0
 else
-  if [[ -f "jmdict-eng-${latest}.json.zip" ]] && [[ "$force" == false ]]; then
+  if [[ -f "build/jmdict-eng-${latest}.json.zip" ]] && [[ "$force" == false ]]; then
     echo "New version available: ${latest}. Already downloaded."
   else
     echo "New version available: ${latest}. Downloading..."
     curl -L --progress-bar \
       "https://github.com/scriptin/jmdict-simplified/releases/download/${latest}/jmdict-eng-${latest}.json.zip" \
-      -o "jmdict-eng-${latest}.json.zip"
+      -o "build/jmdict-eng-${latest}.json.zip"
     echo "Download complete."
   fi
-  find . -maxdepth 1 -name 'jmdict-eng-*.json.zip' ! -name "jmdict-eng-${latest}.json.zip" -delete
+  find ./build -maxdepth 1 -name 'jmdict-eng-*.json.zip' ! -name "jmdict-eng-${latest}.json.zip" -delete
 fi
 
 # Show the remote comparison before filter-repo removes remote-tracking refs.

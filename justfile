@@ -34,7 +34,7 @@ lint: format
 
 # Run tests.
 test:
-    node test.js
+    node javascript/test.js
     {{ UV_CACHE }}; uv run scripts/test_compact_jmdict.py
 
 # Download source if needed and generate JMdict lookup files.

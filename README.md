@@ -103,7 +103,7 @@ To rebuild the WASM binaries from source:
 just setup-wasm-dict     # compile Lindera IPAdic (one-time, takes a few minutes)
 just build-dict          # download JMdict source and build JSON files
 just build-wasm          # rebuild kuromoji WASM
-just build-jmdict-wasm   # rebuild jmdict WASM (reads dict/ JSON files)
+just build-jmdict-wasm   # rebuild jmdict WASM (reads build/ JSON files)
 ```
 
 ## Maintaining the repository
@@ -135,25 +135,24 @@ After the script completes, rebuild the jmdict WASM binaries and commit them:
 
 ```bash
 just build-jmdict-wasm
-git add pkg/jmdict_full_wasm_bg.wasm pkg/jmdict_ultra_wasm_bg.wasm pkg/jmdict_full_wasm.js pkg/jmdict_ultra_wasm.js
+git add pkg/jmdict_full_wasm_bg.wasm.gz pkg/jmdict_ultra_wasm_bg.wasm.gz pkg/jmdict_full_wasm.js pkg/jmdict_ultra_wasm.js
 git commit -m "Rebuild jmdict WASM with updated dictionary."
 ```
 
 ### Large binary files in git history
 
 The following files are committed to the repo and accumulate in git history
-when updated. The update script rewrites history to remove old `dict/jmdict-*.json.gz`
-blobs — it should be extended to also remove old `pkg/*.wasm` blobs when the
-WASM binaries are rebuilt.
+when updated. The update script rewrites history to remove old
+`build/jmdict-*.json.gz` blobs. Old `pkg/*.wasm.gz` blobs from WASM rebuilds
+should also be pruned periodically using `git filter-repo`.
 
-| Path                                | Why committed               | Size         |
-| ----------------------------------- | --------------------------- | ------------ |
-| `dict/jmdict-full.json.gz`          | build input for jmdict-wasm | ~7.7 MB      |
-| `dict/jmdict-ultra-compact.json.gz` | build input for jmdict-wasm | ~1.7 MB      |
-| `dict/*.dat.gz`                     | kuromoji-wasm build input   | ~18 MB total |
-| `pkg/jmdict_full_wasm_bg.wasm`      | served by GitHub Pages      | ~37 MB       |
-| `pkg/jmdict_ultra_wasm_bg.wasm`     | served by GitHub Pages      | ~9.9 MB      |
-| `pkg/kuromoji_wasm_bg.wasm`         | served by GitHub Pages      | ~18 MB       |
+| Path                                 | Why committed               | Size    |
+| ------------------------------------ | --------------------------- | ------- |
+| `build/jmdict-full.json.gz`          | build input for jmdict-wasm | ~7.7 MB |
+| `build/jmdict-ultra-compact.json.gz` | build input for jmdict-wasm | ~1.7 MB |
+| `pkg/jmdict_full_wasm_bg.wasm.gz`    | served by GitHub Pages      | ~13 MB  |
+| `pkg/jmdict_ultra_wasm_bg.wasm.gz`   | served by GitHub Pages      | ~3.5 MB |
+| `pkg/kuromoji_wasm_bg.wasm.gz`       | served by GitHub Pages      | ~5 MB   |
 
 Note: GitHub will also periodically run its own garbage collection on the server
 side, which helps over time, but won't rewrite history to remove old blobs —

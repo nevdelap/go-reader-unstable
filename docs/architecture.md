@@ -1,30 +1,45 @@
 # 語 Reader — Architecture
 
-A single-file static Japanese reader. No server, no build step — deploys anywhere (currently GitHub Pages).
+A static Japanese reader. No server-side text processing — tokenization and
+dictionary lookups run in WASM in the browser. Deploys anywhere static
+(currently GitHub Pages).
 
 ## Files
 
-| File                                        | Purpose                                                                                                                |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `index.html`                                | Entire app — HTML, CSS, and JavaScript                                                                                 |
-| `kuromoji.js`                               | Japanese morphological analyzer (runs in the browser)                                                                  |
-| `dict/jmdict-*.json.gz`                     | Ultra-compact and full gzipped JMdict lookup data (morpheme → English glosses)                                         |
-| `dict/`                                     | Binary dictionary files loaded by kuromoji at runtime                                                                  |
-| `scripts/compact_jmdict.py`                 | Build script: preprocesses full JMdict JSON into browser lookup files                                                  |
-| `scripts/update_jmdict_and_compact_repo.sh` | Checks for a new JMdict release, downloads it, rebuilds dictionary files, and rewrites git history to remove old blobs |
-| `scripts/local_serve.py`                    | Local dev server                                                                                                       |
-| `scripts/pre-push`                          | Git pre-push hook                                                                                                      |
-| `manifest.json` / `favicon.svg`             | PWA manifest and icon                                                                                                  |
+| File/Dir                                    | Purpose                                                                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `index.html`                                | Entire app — HTML, CSS, and JavaScript                                                                                |
+| `javascript/kuromoji_shim.js`               | Drop-in for `window.kuromoji`; queues calls until WASM is ready                                                       |
+| `javascript/jmdict_shim.js`                 | Sets `window.jmdictReady` (a Promise) once jmdict WASM is initialised                                                 |
+| `javascript/japanese-ranges.js`             | Unicode ranges used by `stripNonJapanese()`                                                                           |
+| `kuromoji-wasm/`                            | Rust crate: Lindera tokenizer compiled to WASM                                                                        |
+| `jmdict-wasm/`                              | Rust crate: JMdict compiled in at build time; binary search at lookup time                                            |
+| `pkg/`                                      | WASM binaries (`.wasm.gz`), JS glue (`.js`), and package metadata — committed                                         |
+| `build/`                                    | Generated JMdict JSON lookup files (committed); zip source (gitignored)                                               |
+| `scripts/compact_jmdict.py`                 | Build script: preprocesses full JMdict JSON into browser lookup files                                                 |
+| `scripts/download_jmdict_source.py`         | Build script: downloads latest JMdict release zip to `build/`                                                         |
+| `scripts/update_jmdict_and_compact_repo.sh` | Maintenance: checks for a new JMdict release, rewrites git history to remove old blobs, and rebuilds dictionary files |
+| `scripts/local_serve.py`                    | Local dev server with correct MIME types and cache headers                                                            |
+| `manifest.json` / `favicon.svg`             | PWA manifest and icon                                                                                                 |
 
 ______________________________________________________________________
 
 ## Libraries
 
-- **[kuromoji.js](https://github.com/takuyaa/kuromoji.js)** — Pure JavaScript
-  Japanese morphological analyzer. Loads binary dictionary files from `dict/` at
-  startup, then tokenizes text entirely in-browser.
+- **[kuromoji-wasm](../kuromoji-wasm/)** — Rust/WASM port of Japanese
+  morphological analysis using
+  [Lindera](https://github.com/lindera/lindera) with the IPAdic dictionary
+  bundled into the WASM binary. Compiled ahead of time so the browser receives
+  a ready-to-run binary with no parse step.
+- **[jmdict-wasm](../jmdict-wasm/)** — Rust/WASM binary with JMdict compiled
+  in at build time. The dictionary is stored as a sorted binary index embedded
+  in the WASM data section; lookups are binary searches with zero
+  initialisation cost.
 - **[JMdict](https://www.edrdg.org/jmdict/j_jmdict.html)** — Japanese-English
-  dictionary from EDRDG, bundled as gzipped JSON lookup tables.
+  dictionary from EDRDG. Pre-processed by `compact_jmdict.py` into two gzipped
+  JSON lookup tables (`build/jmdict-full.json.gz` and
+  `build/jmdict-ultra-compact.json.gz`) which are compiled into the WASM
+  binary at build time.
 - **[Lucide](https://lucide.dev/)** — ISC-licensed icon set. The sun and moon
   icons are inlined as SVG in `index.html` for the theme toggle; no external
   dependency.
@@ -34,7 +49,8 @@ ______________________________________________________________________
 ## Analytics
 
 Google Analytics (gtag.js, ID `G-G7TXQ86GYJ`) is used for page view tracking.
-The script is loaded conditionally — skipped entirely when `navigator.doNotTrack === "1"` or `window.doNotTrack === "1"`.
+The script is loaded conditionally — skipped entirely when
+`navigator.doNotTrack === "1"` or `window.doNotTrack === "1"`.
 
 ______________________________________________________________________
 
@@ -47,8 +63,9 @@ User pastes text
 stripNonJapanese()          — strips Latin, numbers, and non-Japanese punctuation
        │
        ▼
-kuromoji.tokenize()         — produces morpheme tokens:
-                              surface_form, reading, basic_form, pos
+kuromoji.tokenize()         — kuromoji_shim.js forwards to kuromoji-wasm (Lindera)
+                              produces morpheme tokens: surface_form, reading,
+                              basic_form, pos, pos_detail_1
        │
        ▼
 renderTokens()              — builds clickable <span> elements (display: inline)
@@ -59,7 +76,8 @@ renderTokens()              — builds clickable <span> elements (display: inlin
 openPanel()                 — bottom panel shows:
                               • surface form + hiragana reading
                               • part of speech (mapped JP → EN)
-                              • English gloss(es) from JMdict (up to two results, joined with ;)
+                              • English gloss(es) from jmdict-wasm (up to two
+                                results, joined with ;)
 ```
 
 ______________________________________________________________________
@@ -73,11 +91,11 @@ it to flat maps containing only what the app needs:
 { "word": {"p": ["n", ...], "g": [["gloss1", "gloss2", ...], ...]}, ... }
 ```
 
-- `jmdict-ultra-compact.json.gz` (~1.7 MB gzipped) keeps entries marked common by
-  JMdict priority data plus grammar-related entries used for particle/auxiliary
-  disambiguation, with all English senses for each kept entry.
-- `jmdict-full.json.gz` (~7.7 MB gzipped) is the default. It keeps all English
-  entries and every English sense.
+- `build/jmdict-ultra-compact.json.gz` (~1.7 MB gzipped) keeps entries marked
+  common by JMdict priority data plus grammar-related entries used for
+  particle/auxiliary disambiguation, with all English senses for each kept entry.
+- `build/jmdict-full.json.gz` (~7.7 MB gzipped) is the default. It keeps all
+  English entries and every English sense.
 - `g` is a list of gloss groups — one inner list per JMdict entry; groups are
   displayed joined with `,` within a group and `;` between groups
 - On key collision (multiple entries share the same kanji/kana form), the common
@@ -86,26 +104,47 @@ it to flat maps containing only what the app needs:
 - Outputs are written atomically to avoid leaving corrupt gzip files if
   generation is interrupted.
 
-Run `just build-dict` to regenerate. See [Maintaining the
-repository](../README.md#maintaining-the-repository) in the README.
+These JSON files are compiled into the jmdict-wasm WASM binary at build time
+by `jmdict-wasm/build.rs`. The build script sorts entries by key bytes and
+writes a binary index (`jmdict.bin`) embedded via `include_bytes!`. At lookup
+time, `src/lib.rs` performs a binary search over the index and deserialises the
+matched entry with `postcard`.
+
+Run `just build-dict` to regenerate the JSON, then `just build-jmdict-wasm` to
+rebuild the WASM. See [Maintaining the repository](../README.md#maintaining-the-repository)
+in the README.
 
 ______________________________________________________________________
 
 ## Dictionary Loading
 
-At startup, kuromoji and the selected JMdict file are loaded in parallel. The
-browser decompresses the selected gzip using the native `DecompressionStream`
-API (falls back to server-decompressed response when a local dev server handles
-gzip automatically).
+At startup, the kuromoji and jmdict WASM modules load in parallel. Each shim
+fetches its `.wasm.gz` file from `pkg/`, pipes the response body through a
+`DecompressionStream('gzip')`, and passes the decompressed bytes to the
+wasm-bindgen init function.
 
-The dictionary mode is stored in `localStorage` as `dictionaryMode`.
-Unrecognized values fall back to `full`. Changes made in settings apply
-after reload.
+```text
+javascript/kuromoji_shim.js  →  fetch pkg/kuromoji_wasm_bg.wasm.gz
+                                 DecompressionStream('gzip')
+                                 mod.default({ module_or_path: Response })
+                                 window.kuromoji.builder().build() calls flushed
 
-Up to 5 retry attempts with increasing delays (2s, 4s, 6s…) if either load
+javascript/jmdict_shim.js    →  fetch pkg/jmdict_{ultra,full}_wasm_bg.wasm.gz
+                                 DecompressionStream('gzip')
+                                 mod.default({ module_or_path: Response })
+                                 window.jmdictReady resolved
+```
+
+`index.html` awaits `window.jmdictReady` and sets `jmdict` to a JS `Proxy`
+that calls `mod.lookup(word)` on every property access. The `has` trap makes
+`word in jmdict` work correctly.
+
+The dictionary mode (`ultra` / `full`) is stored in `localStorage` as
+`dictionaryMode`. Unrecognised values fall back to `full`. Changes apply after
+reload.
+
+Up to 5 retry attempts with increasing delays (2 s, 4 s, 6 s…) if either load
 fails.
-
-The dictionary URL includes a `?v=N` cache-bust parameter (currently `?v=21`).
 
 ______________________________________________________________________
 
@@ -138,7 +177,7 @@ Katakana readings from kuromoji are converted to hiragana for display
 
 Words that function as particles or auxiliary verbs often have a primary JMdict
 entry that describes their non-grammatical meaning (e.g., て as a quoting
-particle,って). To ensure correct glosses in grammar contexts, the generated
+particle, って). To ensure correct glosses in grammar contexts, the generated
 dictionary includes a `pg` field containing glosses from grammar-related senses:
 
 - **Source senses**: JMdict entries tagged as particle (`prt`), expression
@@ -291,7 +330,9 @@ ______________________________________________________________________
 
 ## Deployment
 
-The app is fully static — serve `index.html` and the supporting files from any
-static host. Fonts are vendored in `fonts/`. On first load, the browser fetches
-the selected `dict/jmdict-*.json.gz` file, the local font files, and the kuromoji binary
-dictionary files in `dict/`.
+The app is fully static. The compiled WASM binaries are committed to `pkg/` as
+pre-gzip-compressed `.wasm.gz` files. GitHub Pages serves them as raw bytes;
+the shims fetch and decompress client-side via `DecompressionStream('gzip')`.
+
+Fonts are vendored in `fonts/`. A fresh clone can be served immediately with
+`just serve` — no build step required for day-to-day development.
