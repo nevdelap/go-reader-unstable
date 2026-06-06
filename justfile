@@ -43,10 +43,9 @@ build-dict:
     {{ UV_CACHE }}; uv run scripts/compact_jmdict.py
 
 # Build the WASM tokenizer (requires wasm-pack; run setup-wasm-dict first if pkg/ is missing).
-build-wasm: _build-wasm-raw compress-wasm
-
-_build-wasm-raw:
+build-wasm:
     cd lindera-wasm && LINDERA_CACHE={{justfile_directory()}}/lindera-wasm/lindera-cache wasm-pack build --target web --release --out-dir ../pkg
+    gzip -kf pkg/lindera_wasm_bg.wasm
 
 # Pre-build the Lindera IPAdic dictionary from a local tarball (run once after cloning).
 # Downloads the MeCab IPAdic tarball from SourceForge, then compiles it.
@@ -63,19 +62,15 @@ test-wasm:
 # Build the ultra-compact JMdict WASM binary.
 build-jmdict-wasm-ultra:
     cd jmdict-wasm && wasm-pack build --target web --release --out-dir ../pkg --out-name jmdict_ultra_wasm -- --features ultra
+    gzip -kf pkg/jmdict_ultra_wasm_bg.wasm
 
 # Build the full JMdict WASM binary.
 build-jmdict-wasm-full:
     cd jmdict-wasm && wasm-pack build --target web --release --out-dir ../pkg --out-name jmdict_full_wasm -- --features full
+    gzip -kf pkg/jmdict_full_wasm_bg.wasm
 
-# Build both JMdict WASM binaries and compress them.
-build-jmdict-wasm: build-jmdict-wasm-ultra build-jmdict-wasm-full compress-wasm
-
-# Pre-compress WASM binaries for local serving (local_serve.py uses the .gz sidecars).
-compress-wasm:
-    for f in pkg/jmdict_ultra_wasm_bg.wasm pkg/jmdict_full_wasm_bg.wasm pkg/lindera_wasm_bg.wasm; do \
-        [[ -f "$f" ]] && gzip -kf "$f" || true; \
-    done
+# Build both JMdict WASM binaries.
+build-jmdict-wasm: build-jmdict-wasm-ultra build-jmdict-wasm-full
 
 # Run all tests (JS + Python + Rust).
 test-all: test test-wasm
