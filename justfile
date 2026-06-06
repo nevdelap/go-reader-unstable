@@ -43,7 +43,9 @@ build-dict:
     {{ UV_CACHE }}; uv run scripts/compact_jmdict.py
 
 # Build the WASM tokenizer (requires wasm-pack; run setup-wasm-dict first if pkg/ is missing).
-build-wasm:
+build-wasm: _build-wasm-raw compress-wasm
+
+_build-wasm-raw:
     cd lindera-wasm && LINDERA_CACHE={{justfile_directory()}}/lindera-wasm/lindera-cache wasm-pack build --target web --release --out-dir ../pkg
 
 # Pre-build the Lindera IPAdic dictionary from a local tarball (run once after cloning).
