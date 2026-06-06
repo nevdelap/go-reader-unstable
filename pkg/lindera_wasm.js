@@ -122,7 +122,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./lindera_wasm_bg.js": import0,
+        "./kuromoji_wasm_bg.js": import0,
     };
 }
 
