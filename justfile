@@ -71,9 +71,9 @@ build-jmdict-wasm: build-jmdict-wasm-ultra build-jmdict-wasm-full compress-wasm
 
 # Pre-compress WASM binaries for local serving (local_serve.py uses the .gz sidecars).
 compress-wasm:
-    gzip -kf pkg/jmdict_ultra_wasm_bg.wasm
-    gzip -kf pkg/jmdict_full_wasm_bg.wasm
-    gzip -kf pkg/lindera_wasm_bg.wasm
+    for f in pkg/jmdict_ultra_wasm_bg.wasm pkg/jmdict_full_wasm_bg.wasm pkg/lindera_wasm_bg.wasm; do \
+        [[ -f "$f" ]] && gzip -kf "$f" || true; \
+    done
 
 # Run all tests (JS + Python + Rust).
 test-all: test test-wasm

@@ -1,14 +1,14 @@
 {
-  "name": "jmdict-wasm",
+  "name": "lindera-wasm",
   "type": "module",
   "version": "0.1.0",
   "files": [
-    "jmdict_full_wasm_bg.wasm",
-    "jmdict_full_wasm.js",
-    "jmdict_full_wasm.d.ts"
+    "lindera_wasm_bg.wasm",
+    "lindera_wasm.js",
+    "lindera_wasm.d.ts"
   ],
-  "main": "jmdict_full_wasm.js",
-  "types": "jmdict_full_wasm.d.ts",
+  "main": "lindera_wasm.js",
+  "types": "lindera_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
   ]
