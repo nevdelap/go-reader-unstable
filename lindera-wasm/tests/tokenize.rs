@@ -1,4 +1,4 @@
-use kuromoji_wasm::tokenize_native;
+use lindera_wasm::tokenize_native;
 
 #[test]
 fn check_detail_indices() {

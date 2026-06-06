@@ -501,20 +501,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kuromoji-wasm"
-version = "0.1.0"
-dependencies = [
- "js-sys",
- "lindera-core",
- "lindera-dictionary",
- "lindera-tokenizer",
- "serde",
- "serde-wasm-bindgen",
- "wasm-bindgen",
- "wasm-bindgen-test",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -695,6 +681,20 @@ dependencies = [
  "lindera-core",
  "lindera-decompress",
  "lindera-dictionary-builder",
+]
+
+[[package]]
+name = "lindera-wasm"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "lindera-core",
+ "lindera-dictionary",
+ "lindera-tokenizer",
+ "serde",
+ "serde-wasm-bindgen",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
 ]
 
 [[package]]

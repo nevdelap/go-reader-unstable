@@ -1,5 +1,5 @@
 docs/todo.md
-/kuromoji-wasm/target/
-/kuromoji-wasm/lindera-cache/
-/kuromoji-wasm/build-dict/target/
+/lindera-wasm/target/
+/lindera-wasm/lindera-cache/
+/lindera-wasm/build-dict/target/
 /jmdict-wasm/target/

@@ -37,7 +37,7 @@ counts, and is skipped when browser Do Not Track is enabled.
 
 ## How it works
 
-- **Tokenization** — [kuromoji-wasm](kuromoji-wasm/), a Rust/WebAssembly port
+- **Tokenization** — [lindera-wasm](lindera-wasm/), a Rust/WebAssembly port
   using [Lindera](https://github.com/lindera/lindera) with the IPAdic dictionary,
   compiled ahead of time so the browser receives a ready-to-run binary with no
   parse step
@@ -53,7 +53,7 @@ See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 - App code: [MIT](LICENSE)
 - Dictionary data: [CC BY-SA 4.0](LICENSE-JMDICT) — © Electronic Dictionary
   Research and Development Group
-- Lindera/IPAdic: [Apache 2.0](LICENSE-KUROMOJI) — [NOTICE.md](NOTICE.md)
+- Lindera: [MIT](LICENSE-LINDERA) — [NOTICE.md](NOTICE.md) (IPAdic dictionary)
 - Lucide icons: [ISC](LICENSE-LUCIDE)
 - Fonts: Inter ([SIL Open Font License 1.1](LICENSE-INTER)) and Noto Sans JP
   ([SIL Open Font License 1.1](LICENSE-NOTO-SANS-JP))
@@ -152,7 +152,7 @@ should also be pruned periodically using `git filter-repo`.
 | `build/jmdict-ultra-compact.json.gz` | build input for jmdict-wasm | ~1.7 MB |
 | `pkg/jmdict_full_wasm_bg.wasm.gz`    | served by GitHub Pages      | ~13 MB  |
 | `pkg/jmdict_ultra_wasm_bg.wasm.gz`   | served by GitHub Pages      | ~3.5 MB |
-| `pkg/kuromoji_wasm_bg.wasm.gz`       | served by GitHub Pages      | ~5 MB   |
+| `pkg/lindera_wasm_bg.wasm.gz`        | served by GitHub Pages      | ~5 MB   |
 
 Note: GitHub will also periodically run its own garbage collection on the server
 side, which helps over time, but won't rewrite history to remove old blobs —

@@ -1,4 +1,4 @@
-/* @ts-self-types="./kuromoji_wasm.d.ts" */
+/* @ts-self-types="./lindera_wasm.d.ts" */
 
 export class Builder {
     static __wrap(ptr) {
@@ -122,7 +122,7 @@ function __wbg_get_imports() {
     };
     return {
         __proto__: null,
-        "./kuromoji_wasm_bg.js": import0,
+        "./lindera_wasm_bg.js": import0,
     };
 }
 
@@ -319,7 +319,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (module_or_path === undefined) {
-        module_or_path = new URL('kuromoji_wasm_bg.wasm', import.meta.url);
+        module_or_path = new URL('lindera_wasm_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

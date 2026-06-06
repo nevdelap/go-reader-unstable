@@ -12,7 +12,7 @@ dictionary lookups run in WASM in the browser. Deploys anywhere static
 | `javascript/kuromoji_shim.js`               | Drop-in for `window.kuromoji`; queues calls until WASM is ready                                                       |
 | `javascript/jmdict_shim.js`                 | Sets `window.jmdictReady` (a Promise) once jmdict WASM is initialised                                                 |
 | `javascript/japanese-ranges.js`             | Unicode ranges used by `stripNonJapanese()`                                                                           |
-| `kuromoji-wasm/`                            | Rust crate: Lindera tokenizer compiled to WASM                                                                        |
+| `lindera-wasm/`                             | Rust crate: Lindera tokenizer compiled to WASM                                                                        |
 | `jmdict-wasm/`                              | Rust crate: JMdict compiled in at build time; binary search at lookup time                                            |
 | `pkg/`                                      | WASM binaries (`.wasm.gz`), JS glue (`.js`), and package metadata — committed                                         |
 | `build/`                                    | Generated JMdict JSON lookup files (committed); zip source (gitignored)                                               |
@@ -26,7 +26,7 @@ ______________________________________________________________________
 
 ## Libraries
 
-- **[kuromoji-wasm](../kuromoji-wasm/)** — Rust/WASM port of Japanese
+- **[lindera-wasm](../lindera-wasm/)** — Rust/WASM port of Japanese
   morphological analysis using
   [Lindera](https://github.com/lindera/lindera) with the IPAdic dictionary
   bundled into the WASM binary. Compiled ahead of time so the browser receives
@@ -63,7 +63,7 @@ User pastes text
 stripNonJapanese()          — strips Latin, numbers, and non-Japanese punctuation
        │
        ▼
-kuromoji.tokenize()         — kuromoji_shim.js forwards to kuromoji-wasm (Lindera)
+kuromoji.tokenize()         — kuromoji_shim.js forwards to lindera-wasm (Lindera)
                               produces morpheme tokens: surface_form, reading,
                               basic_form, pos, pos_detail_1
        │
@@ -124,7 +124,7 @@ fetches its `.wasm.gz` file from `pkg/`, pipes the response body through a
 wasm-bindgen init function.
 
 ```text
-javascript/kuromoji_shim.js  →  fetch pkg/kuromoji_wasm_bg.wasm.gz
+javascript/kuromoji_shim.js  →  fetch pkg/lindera_wasm_bg.wasm.gz
                                  DecompressionStream('gzip')
                                  mod.default({ module_or_path: Response })
                                  window.kuromoji.builder().build() calls flushed

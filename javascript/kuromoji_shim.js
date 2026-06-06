@@ -24,14 +24,14 @@
         }
     };
 
-    var wasmResponse = fetch(pkg + 'kuromoji_wasm_bg.wasm.gz').then(function (r) {
+    var wasmResponse = fetch(pkg + 'lindera_wasm_bg.wasm.gz').then(function (r) {
         return new Response(
             r.body.pipeThrough(new DecompressionStream('gzip')),
             { headers: { 'Content-Type': 'application/wasm' } }
         );
     });
 
-    import(pkg + 'kuromoji_wasm.js').then(function (mod) {
+    import(pkg + 'lindera_wasm.js').then(function (mod) {
         return mod.default({ module_or_path: wasmResponse }).then(function () {
             wasmBuilder = mod.builder;
             for (const item of queue) {

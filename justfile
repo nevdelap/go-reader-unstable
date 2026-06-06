@@ -44,19 +44,19 @@ build-dict:
 
 # Build the WASM tokenizer (requires wasm-pack; run setup-wasm-dict first if pkg/ is missing).
 build-wasm:
-    cd kuromoji-wasm && LINDERA_CACHE={{justfile_directory()}}/kuromoji-wasm/lindera-cache wasm-pack build --target web --release --out-dir ../pkg
+    cd lindera-wasm && LINDERA_CACHE={{justfile_directory()}}/lindera-wasm/lindera-cache wasm-pack build --target web --release --out-dir ../pkg
 
 # Pre-build the Lindera IPAdic dictionary from a local tarball (run once after cloning).
 # Downloads the MeCab IPAdic tarball from SourceForge, then compiles it.
 setup-wasm-dict:
-    mkdir -p kuromoji-wasm/lindera-cache
-    curl -L "https://sourceforge.net/projects/mecab/files/mecab-ipadic/2.7.0-20070801/mecab-ipadic-2.7.0-20070801.tar.gz/download" -o kuromoji-wasm/lindera-cache/mecab-ipadic-2.7.0-20070801.tar.gz
-    cd kuromoji-wasm/build-dict && cargo build --release
-    kuromoji-wasm/build-dict/target/release/build-dict kuromoji-wasm/lindera-cache/mecab-ipadic-2.7.0-20070801.tar.gz kuromoji-wasm/lindera-cache/0.32.3/lindera-ipadic
+    mkdir -p lindera-wasm/lindera-cache
+    curl -L "https://sourceforge.net/projects/mecab/files/mecab-ipadic/2.7.0-20070801/mecab-ipadic-2.7.0-20070801.tar.gz/download" -o lindera-wasm/lindera-cache/mecab-ipadic-2.7.0-20070801.tar.gz
+    cd lindera-wasm/build-dict && cargo build --release
+    lindera-wasm/build-dict/target/release/build-dict lindera-wasm/lindera-cache/mecab-ipadic-2.7.0-20070801.tar.gz lindera-wasm/lindera-cache/0.32.3/lindera-ipadic
 
 # Run Rust tests for the WASM tokenizer (native, not in browser).
 test-wasm:
-    cd kuromoji-wasm && LINDERA_CACHE={{justfile_directory()}}/kuromoji-wasm/lindera-cache cargo test
+    cd lindera-wasm && LINDERA_CACHE={{justfile_directory()}}/lindera-wasm/lindera-cache cargo test
 
 # Build the ultra-compact JMdict WASM binary.
 build-jmdict-wasm-ultra:
@@ -73,7 +73,7 @@ build-jmdict-wasm: build-jmdict-wasm-ultra build-jmdict-wasm-full compress-wasm
 compress-wasm:
     gzip -kf pkg/jmdict_ultra_wasm_bg.wasm
     gzip -kf pkg/jmdict_full_wasm_bg.wasm
-    gzip -kf pkg/kuromoji_wasm_bg.wasm
+    gzip -kf pkg/lindera_wasm_bg.wasm
 
 # Run all tests (JS + Python + Rust).
 test-all: test test-wasm
